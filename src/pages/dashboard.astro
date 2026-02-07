@@ -1,0 +1,512 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Dashboard de Operador | CiberPortfolio">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1 class="glitch" data-text="PANEL DE CONTROL">
+                PANEL DE CONTROL
+            </h1>
+            <p class="subtitle">GESTIÓN DE PROYECTOS Y SOLICITUDES</p>
+        </header>
+
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" data-tab="projects">PROYECTOS</button
+            >
+            <button class="tab-btn" data-tab="requests">SOLICITUDES</button>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Projects View -->
+            <div id="projects-view" class="view-section active">
+                <div class="view-header">
+                    <h2>MIS PROYECTOS</h2>
+                    <button id="add-project-btn" class="cyber-button small">
+                        + NUEVO PROYECTO
+                    </button>
+                </div>
+
+                <div id="projects-grid" class="projects-grid">
+                    <!-- Projects injected here -->
+                </div>
+            </div>
+
+            <!-- Requests View -->
+            <div id="requests-view" class="view-section hidden">
+                <div class="view-header">
+                    <h2>SOLICITUDES RECIBIDAS</h2>
+                </div>
+
+                <div class="requests-table-container">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>FECHA</th>
+                                <th>USUARIO</th>
+                                <th>CORREO</th>
+                                <th>NOTA</th>
+                                <th>ESTADO</th>
+                                <th>ACCIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-body">
+                            <!-- Requests injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Project Modal -->
+    <div id="project-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="close-project-modal" class="close-btn">&times;</button>
+            <h2>REGISTRAR PROYECTO</h2>
+            <form id="project-form">
+                <div class="input-group">
+                    <label>NOMBRE DEL PROYECTO</label>
+                    <input
+                        type="text"
+                        name="name"
+                        required
+                        placeholder="Ej: Sistema de Gestión IA"
+                    />
+                </div>
+                <div class="row">
+                    <div class="input-group">
+                        <label>TIPO</label>
+                        <select name="type" required>
+                            <option value="Profesional">Profesional</option>
+                            <option value="Académico">Académico</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>ROL</label>
+                        <select name="role" required>
+                            <option value="Full Stack">Full Stack</option>
+                            <option value="Frontend">Frontend</option>
+                            <option value="Backend">Backend</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>DESCRIPCIÓN</label>
+                    <textarea name="description" rows="3" required></textarea>
+                </div>
+                <div class="input-group">
+                    <label>TECNOLOGÍAS (Separadas por coma)</label>
+                    <input
+                        type="text"
+                        name="techs"
+                        placeholder="React, Node.js, MongoDB"
+                        required
+                    />
+                </div>
+                <div class="input-group">
+                    <label>URL REPOSITORIO</label>
+                    <input
+                        type="url"
+                        name="repoUrl"
+                        placeholder="https://github.com/..."
+                        required
+                    />
+                </div>
+                <div class="input-group">
+                    <label>URL DESPLIEGUE</label>
+                    <input
+                        type="url"
+                        name="deployUrl"
+                        placeholder="https://..."
+                        required
+                    />
+                </div>
+                <div class="input-group">
+                    <label>URL IMAGEN</label>
+                    <input
+                        type="url"
+                        name="imageUrl"
+                        placeholder="https://... o dejar vacío para default"
+                    />
+                </div>
+                <button type="submit" class="cyber-button"
+                    >GUARDAR PROYECTO</button
+                >
+            </form>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    // Auth Check
+    const userStr = localStorage.getItem("ciber_user");
+    if (!userStr) {
+        window.location.href = "/login";
+    } else {
+        const user = JSON.parse(userStr);
+        if (user.role !== "programmer") {
+            alert("Acceso denegado: Área restringida a Operadores.");
+            window.location.href = "/";
+        }
+    }
+
+    // Tabs Logic
+    const tabs = document.querySelectorAll(".tab-btn");
+    const views = document.querySelectorAll(".view-section");
+
+    tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            // Remove active class from all
+            tabs.forEach((t) => t.classList.remove("active"));
+            views.forEach((v) => v.classList.add("hidden"));
+            views.forEach((v) => v.classList.remove("active"));
+
+            // Add active to current
+            tab.classList.add("active");
+            const viewId = (tab as HTMLElement).dataset.tab + "-view";
+            const view = document.getElementById(viewId);
+            if (view) {
+                view.classList.remove("hidden");
+                view.classList.add("active");
+            }
+        });
+    });
+
+    // Project Logic
+    const projectModal = document.getElementById("project-modal");
+    const addProjectBtn = document.getElementById("add-project-btn");
+    const closeProjectBtn = document.getElementById("close-project-modal");
+    const projectForm = document.getElementById("project-form");
+    const projectsGrid = document.getElementById("projects-grid");
+
+    if (addProjectBtn && projectModal) {
+        addProjectBtn.addEventListener("click", () => {
+            projectModal.classList.remove("hidden");
+            // Small delay to allow display:flex to apply before opacity transition
+            setTimeout(() => {
+                projectModal.classList.add("active");
+            }, 10);
+        });
+    }
+
+    const closeModal = () => {
+        if (projectModal) {
+            projectModal.classList.remove("active");
+            setTimeout(() => {
+                projectModal.classList.add("hidden");
+            }, 300); // Wait for transition
+        }
+    };
+    if (closeProjectBtn) closeProjectBtn.addEventListener("click", closeModal);
+
+    // Initial Load
+    function loadProjects() {
+        const projects = JSON.parse(
+            localStorage.getItem("ciber_projects") || "[]",
+        );
+        if (projectsGrid) {
+            projectsGrid.innerHTML = projects
+                .map(
+                    (p: any) => `
+                <div class="db-project-card">
+                    <div class="db-project-img" style="background-image: url('${p.imageUrl || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b"}')"></div>
+                    <div class="db-project-info">
+                        <h3>${p.name}</h3>
+                        <span class="db-badge ${p.type === "Profesional" ? "pro" : "academic"}">${p.type}</span>
+                        <p>${p.description.substring(0, 60)}...</p>
+                        <div class="db-techs">
+                            ${p.techs.map((t: string) => `<span>${t}</span>`).join("")}
+                        </div>
+                    </div>
+                </div>
+            `,
+                )
+                .join("");
+
+            if (projects.length === 0) {
+                projectsGrid.innerHTML =
+                    '<p class="no-data">No hay proyectos registrados.</p>';
+            }
+        }
+    }
+
+    function loadRequests() {
+        const requestsBody = document.getElementById("requests-body");
+        const requests = JSON.parse(
+            localStorage.getItem("ciber_requests") || "[]",
+        );
+
+        if (requestsBody) {
+            requestsBody.innerHTML = requests
+                .map(
+                    (r: any) => `
+                <tr>
+                    <td>${new Date(r.timestamp).toLocaleDateString()}</td>
+                    <td>${r.userName}</td>
+                    <td>${r.userEmail}</td>
+                    <td>${r.notes}</td>
+                    <td><span class="status ${r.status}">${r.status}</span></td>
+                    <td>
+                        <button class="action-btn" onclick="alert('Funcionalidad de respuesta simulada')">✉️ REPLI</button>
+                    </td>
+                </tr>
+             `,
+                )
+                .join("");
+
+            if (requests.length === 0) {
+                requestsBody.innerHTML =
+                    '<tr><td colspan="6" class="no-data">No hay solicitudes pendientes.</td></tr>';
+            }
+        }
+    }
+
+    loadProjects();
+    loadRequests();
+
+    if (projectForm) {
+        projectForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const formData = new FormData(projectForm as HTMLFormElement);
+
+            const techsString = formData.get("techs") as string;
+            const techs = techsString.split(",").map((t) => t.trim());
+
+            const newProject = {
+                id: Date.now(),
+                name: formData.get("name"),
+                type: formData.get("type"),
+                role: formData.get("role"),
+                description: formData.get("description"),
+                techs: techs,
+                repoUrl: formData.get("repoUrl"),
+                deployUrl: formData.get("deployUrl"),
+                imageUrl: formData.get("imageUrl"),
+            };
+
+            const projects = JSON.parse(
+                localStorage.getItem("ciber_projects") || "[]",
+            );
+            projects.push(newProject);
+            localStorage.setItem("ciber_projects", JSON.stringify(projects));
+
+            loadProjects();
+            closeModal();
+            (projectForm as HTMLFormElement).reset();
+        });
+    }
+</script>
+
+<style>
+    .dashboard-container {
+        padding: 6rem 2rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 3rem;
+        color: var(--text-main);
+        letter-spacing: 4px;
+    }
+
+    .subtitle {
+        color: var(--cyber-purple);
+        letter-spacing: 2px;
+    }
+
+    .dashboard-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+        background: transparent;
+        border: 1px solid var(--text-dim);
+        color: var(--text-dim);
+        padding: 0.8rem 2rem;
+        font-family: var(--font-heading);
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active,
+    .tab-btn:hover {
+        border-color: var(--neon-green);
+        color: var(--neon-green);
+        background: rgba(57, 255, 20, 0.1);
+        box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+    }
+
+    .view-section {
+        background: rgba(5, 10, 8, 0.6);
+        border: 1px solid var(--glass-border);
+        padding: 2rem;
+        border-radius: 12px;
+        min-height: 400px;
+    }
+
+    .view-section.hidden {
+        display: none;
+    }
+
+    .view-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 1rem;
+    }
+
+    .view-header h2 {
+        color: var(--text-main);
+    }
+
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .db-project-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+
+    .db-project-card:hover {
+        border-color: var(--neon-green);
+        transform: translateY(-5px);
+    }
+
+    .db-project-img {
+        height: 150px;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .db-project-info {
+        padding: 1rem;
+    }
+
+    .db-project-info h3 {
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .db-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+    }
+
+    .db-badge.pro {
+        background: rgba(57, 255, 20, 0.2);
+        color: var(--neon-green);
+    }
+    .db-badge.academic {
+        background: rgba(188, 19, 254, 0.2);
+        color: var(--cyber-purple);
+    }
+
+    .db-techs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        margin-top: 0.5rem;
+    }
+
+    .db-techs span {
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        border: 1px solid var(--text-dim);
+        padding: 0.1rem 0.4rem;
+        border-radius: 10px;
+    }
+
+    /* Table Styles */
+    .cyber-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--text-main);
+    }
+
+    .cyber-table th,
+    .cyber-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .cyber-table th {
+        color: var(--neon-green);
+        font-family: var(--font-heading);
+    }
+
+    .status.pending {
+        color: orange;
+    }
+
+    /* Modal Styles (Reuse some from Auth/Advisory) */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 3000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-overlay.hidden {
+        display: none;
+    }
+
+    .modal-content {
+        background: #0a0f0d;
+        border: 1px solid var(--neon-green);
+        padding: 2rem;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .input-group {
+        margin-bottom: 1rem;
+    }
+
+    .input-group input,
+    .input-group textarea,
+    .input-group select {
+        width: 100%;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: white;
+    }
+
+    .no-data {
+        color: var(--text-dim);
+        text-align: center;
+        padding: 2rem;
+        font-style: italic;
+    }
+</style>

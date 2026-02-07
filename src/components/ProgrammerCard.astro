@@ -1,5 +1,6 @@
 ---
 interface Props {
+    id: string;
     name: string;
     role: string;
     image: string;
@@ -7,47 +8,36 @@ interface Props {
     socials: { twitter?: string; github?: string; linkedin?: string };
 }
 
-const { name, role, image, skills, socials } = Astro.props;
+const { id, name, role, image, skills, socials } = Astro.props;
 ---
 
-<div class="programmer-card">
-    <div class="card-image">
-        <img src={image} alt={name} />
-        <div class="overlay"></div>
-    </div>
-    <div class="card-content">
-        <h3>{name}</h3>
-        <p class="role">{role}</p>
-        <div class="tags">
-            {skills.map((skill) => <span class="tag">{skill}</span>)}
+<a href={`/programmer?id=${id}`} class="programmer-card-link">
+    <div class="programmer-card">
+        <div class="card-image">
+            <img src={image} alt={name} />
+            <div class="overlay"></div>
         </div>
-        <div class="social-links">
-            {
-                socials.github && (
-                    <a href={socials.github} target="_blank">
-                        GH
-                    </a>
-                )
-            }
-            {
-                socials.linkedin && (
-                    <a href={socials.linkedin} target="_blank">
-                        LI
-                    </a>
-                )
-            }
-            {
-                socials.twitter && (
-                    <a href={socials.twitter} target="_blank">
-                        TW
-                    </a>
-                )
-            }
+        <div class="card-content">
+            <h3>{name}</h3>
+            <p class="role">{role}</p>
+            <div class="tags">
+                {skills.map((skill) => <span class="tag">{skill}</span>)}
+            </div>
+            <!-- Socials managed inside profile or here? Links inside link is bad practice. -->
+            <!-- Removing direct social links from card preview to avoid nested interactions, moving to profile page -->
+            <div class="card-footer">
+                <span class="view-profile">VER PERFIL &rarr;</span>
+            </div>
         </div>
     </div>
-</div>
+</a>
 
 <style>
+    .programmer-card-link {
+        text-decoration: none;
+        display: block;
+    }
+
     .programmer-card {
         background: var(--glass-bg);
         border: 1px solid var(--glass-border);
@@ -57,6 +47,7 @@ const { name, role, image, skills, socials } = Astro.props;
             transform 0.3s,
             box-shadow 0.3s;
         position: relative;
+        height: 100%;
     }
 
     .programmer-card:hover {
@@ -127,19 +118,22 @@ const { name, role, image, skills, socials } = Astro.props;
         border: 1px solid rgba(188, 19, 254, 0.3);
     }
 
-    .social-links {
-        display: flex;
-        gap: 1rem;
+    .card-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 1rem;
+        text-align: right;
     }
 
-    .social-links a {
-        color: var(--text-dim);
-        font-family: var(--font-heading);
-        font-weight: bold;
-        font-size: 0.9rem;
-    }
-
-    .social-links a:hover {
+    .view-profile {
         color: var(--neon-green);
+        font-size: 0.8rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+    }
+
+    .programmer-card:hover .view-profile {
+        padding-right: 5px;
+        text-shadow: 0 0 5px var(--neon-green);
     }
 </style>

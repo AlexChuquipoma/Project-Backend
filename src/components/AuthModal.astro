@@ -1,0 +1,203 @@
+---
+
+---
+
+<div id="auth-modal" class="auth-modal">
+    <div class="auth-content">
+        <div class="lock-icon">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="feather feather-lock"
+                ><rect x="3" y="11" width="18" height="11" rx="2" ry="2"
+                ></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg
+            >
+        </div>
+        <h2>ACCESO RESTRINGIDO</h2>
+        <p>
+            Necesitas registrarte o iniciar sesión para agendar una asesoría con
+            un programador.
+        </p>
+
+        <div class="modal-actions">
+            <button id="close-auth-modal" class="cyber-button secondary">
+                CANCELAR
+            </button>
+            <a href="/login" class="cyber-button primary">
+                INICIAR SESIÓN
+                <span class="btn-glitch"></span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const authModal = document.getElementById("auth-modal");
+    const closeBtn = document.getElementById("close-auth-modal");
+
+    // Function to open modal (global)
+    (window as any).openAuthModal = () => {
+        if (authModal) {
+            authModal.classList.add("active");
+        }
+    };
+
+    if (closeBtn && authModal) {
+        closeBtn.addEventListener("click", () => {
+            authModal.classList.remove("active");
+        });
+
+        // Close on click outside
+        authModal.addEventListener("click", (e) => {
+            if (e.target === authModal) {
+                authModal.classList.remove("active");
+            }
+        });
+    }
+</script>
+
+<style>
+    .auth-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85); /* Darker backdrop */
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 3000; /* Higher than navbar */
+        backdrop-filter: blur(8px);
+    }
+
+    .auth-modal.active {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .auth-content {
+        background: #0a0f0d;
+        border: 1px solid var(--neon-green);
+        padding: 2.5rem;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+        box-shadow: 0 0 30px rgba(57, 255, 20, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-content::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--neon-green),
+            transparent
+        );
+        animation: scan 2s linear infinite;
+    }
+
+    .lock-icon {
+        margin-bottom: 1.5rem;
+        color: var(--neon-green);
+    }
+
+    .lock-icon svg {
+        width: 60px;
+        height: 60px;
+        filter: drop-shadow(0 0 10px var(--neon-green));
+    }
+
+    h2 {
+        color: var(--text-main);
+        font-family: var(--font-heading);
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        letter-spacing: 2px;
+    }
+
+    p {
+        color: var(--text-dim);
+        margin-bottom: 2rem;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .cyber-button {
+        padding: 0.8rem 1.5rem;
+        border: 1px solid var(--neon-green);
+        background: transparent;
+        color: var(--neon-green);
+        font-family: var(--font-heading);
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none; /* For link */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        min-width: 140px;
+    }
+
+    .cyber-button.primary {
+        background: rgba(57, 255, 20, 0.1);
+        font-weight: bold;
+    }
+
+    .cyber-button.primary:hover {
+        background: var(--neon-green);
+        color: #000;
+        box-shadow: 0 0 20px var(--neon-green);
+    }
+
+    .cyber-button.secondary {
+        border-color: var(--text-dim);
+        color: var(--text-dim);
+    }
+
+    .cyber-button.secondary:hover {
+        border-color: #ff3333;
+        color: #ff3333;
+        box-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes scan {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+</style>

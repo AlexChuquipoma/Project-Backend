@@ -11,7 +11,9 @@
             <li><a href="/#skills">HABILIDADES</a></li>
             <li><a href="/#programmers">EQUIPOS</a></li>
             <li><a href="/#projects">PROYECTOS</a></li>
-            <li><a href="/login" class="login-btn">INICIAR SESIÓN</a></li>
+            <li id="auth-item">
+                <a href="/login" class="login-btn">INICIAR SESIÓN</a>
+            </li>
         </ul>
         <div class="hamburger">
             <span></span>
@@ -124,6 +126,206 @@
             display: flex;
         }
     }
+
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-name {
+        color: var(--neon-green);
+        font-weight: bold;
+        text-shadow: 0 0 5px var(--neon-green);
+    }
+
+    .logout-link {
+        background: none;
+        border: 1px solid var(--text-dim);
+        color: var(--text-dim);
+        padding: 0.2rem 0.8rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.3s;
+        font-family: var(--font-heading);
+    }
+
+    .logout-link:hover {
+        border-color: #ff3333;
+        color: #ff3333;
+    }
+</style>
+
+<style is:global>
+    /* Profile Dropdown Styles - GLOBAL because injected via JS */
+    .profile-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        border-radius: 50px;
+        transition: all 0.3s ease;
+    }
+
+    .profile-trigger:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--neon-green);
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    }
+
+    .profile-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        border: 2px solid var(--neon-green);
+        object-fit: cover;
+    }
+
+    .profile-arrow {
+        color: var(--neon-green);
+        font-size: 0.8rem;
+        transition: transform 0.3s;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 15px);
+        right: 0;
+        width: 260px;
+        background: #000000;
+        border: 1px solid var(--neon-green);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+        display: none;
+        flex-direction: column;
+        gap: 0.8rem;
+        z-index: 2000;
+    }
+
+    .dropdown-menu::before {
+        content: "";
+        position: absolute;
+        top: -6px;
+        right: 20px;
+        width: 12px;
+        height: 12px;
+        background: #000000;
+        border-left: 1px solid var(--neon-green);
+        border-top: 1px solid var(--neon-green);
+        transform: rotate(45deg);
+    }
+
+    .dropdown-menu.active {
+        display: flex;
+        animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .dropdown-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(57, 255, 20, 0.3);
+    }
+
+    .header-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        border: 2px solid var(--neon-green);
+    }
+
+    .header-info {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .header-name {
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 1rem;
+        font-family: "Rajdhani", sans-serif;
+        letter-spacing: 1px;
+    }
+
+    .header-email {
+        color: #aaaaaa;
+        font-size: 0.75rem;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.8rem;
+        color: #e0e0e0;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        background: transparent;
+        border: 1px solid transparent;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-family: "Rajdhani", sans-serif;
+        outline: none;
+    }
+
+    /* Specific fix for button element to remove browser defaults */
+    button.dropdown-item {
+        appearance: none;
+        -webkit-appearance: none;
+        box-shadow: none;
+    }
+
+    .dropdown-item:hover {
+        background: rgba(57, 255, 20, 0.1);
+        border-color: var(--neon-green);
+        color: var(--neon-green);
+        transform: translateX(5px);
+    }
+
+    .dropdown-item.danger {
+        color: #ff5555;
+        border: 1px solid rgba(255, 85, 85, 0.2);
+        margin-top: 0.5rem;
+    }
+
+    .dropdown-item.danger:hover {
+        background: rgba(255, 85, 85, 0.1);
+        border-color: #ff3333;
+        color: #ff3333;
+        box-shadow: 0 0 10px rgba(255, 51, 51, 0.2);
+    }
+
+    .icon {
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+    }
 </style>
 
 <script>
@@ -136,4 +338,77 @@
             navLinks.classList.toggle("active");
         });
     }
+
+    // Auth Simulation Logic
+    const authItem = document.getElementById("auth-item");
+
+    function checkAuth() {
+        const userStr = localStorage.getItem("ciber_user");
+        if (userStr && authItem) {
+            const user = JSON.parse(userStr);
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=39ff14&color=050a08&bold=true`;
+
+            // User is logged in
+            const dashboardLink =
+                user.role === "programmer"
+                    ? `<a href="/dashboard" class="dropdown-item"><span class="icon">📊</span> Dashboard</a>`
+                    : "";
+
+            authItem.innerHTML = `
+                <div class="profile-dropdown">
+                    <div class="profile-trigger" id="profile-trigger">
+                        <img src="${avatarUrl}" alt="Perfil" class="profile-avatar">
+                        <span class="profile-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <div class="dropdown-header">
+                            <img src="${avatarUrl}" alt="Perfil" class="header-avatar">
+                            <div class="header-info">
+                                <span class="header-name">${user.name}</span>
+                                <span class="header-email">${user.email}</span>
+                            </div>
+                        </div>
+                        ${dashboardLink}
+                        <a href="#" class="dropdown-item">
+                            <span class="icon">👤</span> Mi Perfil
+                        </a>
+                        <button id="logout-btn" class="dropdown-item danger">
+                            <span class="icon">↪️</span> Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Dropdown Logic
+            const trigger = document.getElementById("profile-trigger");
+            const menu = document.getElementById("dropdown-menu");
+
+            if (trigger && menu) {
+                trigger.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    menu.classList.toggle("active");
+                });
+
+                // Close on click outside
+                document.addEventListener("click", (e) => {
+                    if (
+                        !menu.contains(e.target as Node) &&
+                        !trigger.contains(e.target as Node)
+                    ) {
+                        menu.classList.remove("active");
+                    }
+                });
+            }
+
+            // Add logout listener
+            document
+                .getElementById("logout-btn")
+                ?.addEventListener("click", () => {
+                    localStorage.removeItem("ciber_user");
+                    window.location.reload();
+                });
+        }
+    }
+
+    checkAuth();
 </script>

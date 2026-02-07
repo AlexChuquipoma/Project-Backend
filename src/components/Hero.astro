@@ -17,14 +17,33 @@
         </p>
         <div class="cta-group">
             <a href="#programmers" class="cta-button">EXPLORAR TALENTO</a>
-            <a
-                href="mailto:contacto@ciberportfolio.dev"
-                class="cta-button secondary">AGENDAR ASESORÍA</a
+            <button id="advisory-btn" class="cta-button secondary"
+                >AGENDAR ASESORÍA</button
             >
         </div>
     </div>
     <div class="scanline"></div>
 </section>
+
+<script>
+    const advisoryBtn = document.getElementById("advisory-btn");
+    if (advisoryBtn) {
+        advisoryBtn.addEventListener("click", () => {
+            const userStr = localStorage.getItem("ciber_user");
+            if (userStr) {
+                // User is logged in, open modal
+                if ((window as any).openAdvisoryModal) {
+                    (window as any).openAdvisoryModal();
+                }
+            } else {
+                // User not logged in, show Auth Modal
+                if ((window as any).openAuthModal) {
+                    (window as any).openAuthModal();
+                }
+            }
+        });
+    }
+</script>
 
 <style>
     .hero {

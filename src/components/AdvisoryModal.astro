@@ -1,0 +1,414 @@
+---
+const programmers = [
+    "Alex 'Panther' Code",
+    "Sarah 'Viper' Script",
+    "David 'Bear' Data",
+];
+---
+
+<div id="advisory-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <button id="close-modal" class="close-btn">&times;</button>
+
+        <h2 class="glitch" data-text="AGENDAR ASESORÍA">AGENDAR ASESORÍA</h2>
+        <p class="subtitle">CONECTANDO CON EL NÚCLEO</p>
+
+        <form id="advisory-form" class="advisory-form">
+            <div class="input-group">
+                <label for="programmer-select">PROGRAMADOR EXPERTO</label>
+                <div class="select-wrapper">
+                    <select id="programmer-select" name="programmer" required>
+                        <option value="" disabled selected
+                            >Seleccionar Operador</option
+                        >
+                        {
+                            programmers.map((prog) => (
+                                <option value={prog}>{prog}</option>
+                            ))
+                        }
+                    </select>
+                    <div class="select-arrow"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="input-group">
+                    <label for="user-name">USUARIO</label>
+                    <input type="text" id="user-name" name="name" readonly />
+                    <div class="input-line"></div>
+                </div>
+                <div class="input-group">
+                    <label for="user-email">CORREO</label>
+                    <input type="email" id="user-email" name="email" readonly />
+                    <div class="input-line"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="input-group">
+                    <label for="date">FECHA</label>
+                    <input type="date" id="date" name="date" required />
+                    <div class="input-line"></div>
+                </div>
+                <div class="input-group">
+                    <label for="time">HORA DISPONIBLE</label>
+                    <input type="time" id="time" name="time" required />
+                    <div class="input-line"></div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="notes">NOTA DE MISIÓN</label>
+                <textarea
+                    id="notes"
+                    name="notes"
+                    rows="3"
+                    placeholder="Describe el objetivo de la asesoría..."
+                ></textarea>
+                <div class="input-line"></div>
+            </div>
+
+            <button type="submit" class="cyber-button">
+                CONFIRMAR ENLACE
+                <span class="btn-glitch"></span>
+            </button>
+        </form>
+
+        <!-- Success Message (Initially Hidden) LOCAL AVISOS -->
+        <div id="success-message" class="success-message hidden">
+            <div class="success-icon">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="feather feather-check-circle"
+                    ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
+                    ></path><polyline points="22 4 12 14.01 9 11.01"
+                    ></polyline></svg
+                >
+            </div>
+            <h3>¡ENLACE ESTABLECIDO!</h3>
+            <p>
+                Nuestros operadores han recibido tu señal.<br />Confirmaremos la
+                conexión en breve.
+            </p>
+            <button id="close-success" class="cyber-button small"
+                >ENTENDIDO</button
+            >
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(5, 10, 8, 0.9);
+        backdrop-filter: blur(10px);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .modal-content {
+        background: rgba(10, 20, 15, 0.95);
+        border: 1px solid var(--neon-green);
+        padding: 2.5rem;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 600px;
+        position: relative;
+        box-shadow: 0 0 50px rgba(57, 255, 20, 0.15);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-content {
+        transform: scale(1);
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        font-size: 2rem;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .close-btn:hover {
+        color: var(--neon-green);
+    }
+
+    h2 {
+        text-align: center;
+        color: var(--text-main);
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: var(--cyber-purple);
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+        margin-bottom: 2rem;
+    }
+
+    .input-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    label {
+        display: block;
+        color: var(--text-dim);
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        border-radius: 4px;
+        color: var(--text-main);
+        font-family: var(--font-body);
+        font-size: 1rem;
+        padding: 0.75rem;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: var(--neon-green);
+    }
+
+    input[readonly] {
+        opacity: 0.7;
+        cursor: not-allowed;
+        border-color: transparent;
+        padding-left: 0;
+    }
+
+    .select-wrapper {
+        position: relative;
+    }
+
+    option {
+        background: var(--deep-jungle);
+        color: var(--text-main);
+    }
+
+    .cyber-button {
+        width: 100%;
+        padding: 1rem;
+        background: var(--neon-green);
+        border: none;
+        color: var(--deep-jungle);
+        font-family: var(--font-heading);
+        font-weight: bold;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: all 0.3s;
+    }
+
+    .cyber-button:hover {
+        box-shadow: 0 0 20px var(--neon-green);
+        transform: translateY(-2px);
+    }
+
+    .cyber-button.small {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        width: auto;
+        min-width: 150px;
+        margin: 0 auto;
+        display: block;
+    }
+
+    /* Success Message Styles */
+    .success-message {
+        text-align: center;
+        padding: 2rem;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .success-message.hidden {
+        display: none;
+    }
+
+    .advisory-form.hidden {
+        display: none;
+    }
+
+    .success-icon {
+        color: var(--neon-green);
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .success-message h3 {
+        color: var(--neon-green);
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        font-family: var(--font-heading);
+        letter-spacing: 2px;
+    }
+
+    .success-message p {
+        color: var(--text-main);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 0px var(--neon-green));
+        }
+        50% {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 15px var(--neon-green));
+        }
+        100% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 0px var(--neon-green));
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+    }
+</style>
+
+<script>
+    const modal = document.getElementById("advisory-modal");
+    const closeBtn = document.getElementById("close-modal");
+    const form = document.getElementById("advisory-form");
+    const successMessage = document.getElementById("success-message");
+    const closeSuccessBtn = document.getElementById("close-success");
+    const nameInput = document.getElementById("user-name") as HTMLInputElement;
+    const emailInput = document.getElementById(
+        "user-email",
+    ) as HTMLInputElement;
+
+    // Function to open modal (can be called globally)
+    window.openAdvisoryModal = () => {
+        if (modal) {
+            modal.classList.add("active");
+            // Reset state
+            if (form) form.classList.remove("hidden");
+            if (successMessage) successMessage.classList.add("hidden");
+
+            // Pre-fill user data from localStorage
+            const userStr = localStorage.getItem("ciber_user");
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                if (nameInput) nameInput.value = user.name || "";
+                if (emailInput) emailInput.value = user.email || "";
+            }
+        }
+    };
+
+    const closeModalInfo = () => {
+        if (modal) modal.classList.remove("active");
+    };
+
+    if (closeBtn) closeBtn.addEventListener("click", closeModalInfo);
+    if (closeSuccessBtn)
+        closeSuccessBtn.addEventListener("click", closeModalInfo);
+
+    if (form) {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            // Get form data
+            const formData = new FormData(form as HTMLFormElement);
+            const requestData = {
+                id: Date.now().toString(),
+                programmer: formData.get("programmer"),
+                userName: formData.get("name"),
+                userEmail: formData.get("email"),
+                date: formData.get("date"),
+                time: formData.get("time"),
+                notes: formData.get("notes"),
+                status: "pending",
+                timestamp: new Date().toISOString(),
+            };
+
+            // Save to localStorage
+            const existingRequests = JSON.parse(
+                localStorage.getItem("ciber_requests") || "[]",
+            );
+            existingRequests.push(requestData);
+            localStorage.setItem(
+                "ciber_requests",
+                JSON.stringify(existingRequests),
+            );
+
+            // Simulate API call
+            setTimeout(() => {
+                form.classList.add("hidden");
+                if (successMessage) successMessage.classList.remove("hidden");
+            }, 500);
+        });
+    }
+
+    // Close on click outside
+    if (modal) {
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                modal.classList.remove("active");
+            }
+        });
+    }
+</script>
