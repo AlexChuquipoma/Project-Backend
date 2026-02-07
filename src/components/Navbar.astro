@@ -1,0 +1,139 @@
+---
+
+---
+
+<nav class="navbar">
+    <div class="container">
+        <div class="logo">
+            <a href="/">CIBER<span class="highlight">PORTFOLIO</span></a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/#skills">HABILIDADES</a></li>
+            <li><a href="/#programmers">EQUIPOS</a></li>
+            <li><a href="/#projects">PROYECTOS</a></li>
+            <li><a href="/login" class="login-btn">INICIAR SESIÓN</a></li>
+        </ul>
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        background: rgba(5, 10, 8, 0.8);
+        backdrop-filter: blur(15px);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 1rem 0;
+        transition: all 0.3s ease;
+    }
+
+    .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo a {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--text-main);
+        letter-spacing: 2px;
+        font-family: var(--font-heading);
+    }
+
+    .highlight {
+        color: var(--neon-green);
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .nav-links a {
+        font-size: 0.9rem;
+        color: var(--text-dim);
+        letter-spacing: 1px;
+        font-weight: 500;
+        transition: color 0.3s;
+        position: relative;
+    }
+
+    .nav-links a:not(.login-btn):hover {
+        color: var(--neon-green);
+        text-shadow: 0 0 8px var(--neon-green);
+    }
+
+    .login-btn {
+        padding: 0.5rem 1.5rem;
+        border: 1px solid var(--cyber-purple);
+        color: var(--cyber-purple) !important;
+        border-radius: 4px;
+        font-family: var(--font-heading);
+        transition: all 0.3s;
+    }
+
+    .login-btn:hover {
+        background: var(--cyber-purple);
+        color: white !important;
+        box-shadow: 0 0 15px var(--cyber-purple);
+    }
+
+    .hamburger {
+        display: none;
+        cursor: pointer;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .hamburger span {
+        display: block;
+        width: 25px;
+        height: 3px;
+        background-color: var(--text-main);
+        transition: all 0.3s;
+    }
+
+    @media (max-width: 768px) {
+        .nav-links {
+            display: none; /* Mobile menu implementation could be added later */
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: var(--deep-jungle);
+            flex-direction: column;
+            padding: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav-links.active {
+            display: flex;
+        }
+
+        .hamburger {
+            display: flex;
+        }
+    }
+</style>
+
+<script>
+    // Simple mobile menu toggle
+    const hamburger = document.querySelector(".hamburger");
+    const navLinks = document.querySelector(".nav-links");
+
+    if (hamburger && navLinks) {
+        hamburger.addEventListener("click", () => {
+            navLinks.classList.toggle("active");
+        });
+    }
+</script>

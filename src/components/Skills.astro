@@ -1,0 +1,254 @@
+---
+
+---
+
+<section id="skills" class="skills-section section-padding">
+    <div class="container">
+        <h2 class="section-title">
+            HABILIDADES <span class="neon-text-green">EVOLUCIONADAS</span>
+        </h2>
+        <p class="section-description">
+            Dominamos la selva digital con un stack tecnológico adaptativo.
+            Desde interfaces reactivas hasta arquitecturas de datos
+            indestructibles, nuestro ADN está codificado para la eficiencia y la
+            escalabilidad.
+        </p>
+
+        <div class="skills-grid">
+            <!-- Frontend -->
+            <div class="skill-card frontend">
+                <div class="card-inner">
+                    <div class="icon-wrapper">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="feather feather-monitor"
+                            ><rect
+                                x="2"
+                                y="3"
+                                width="20"
+                                height="14"
+                                rx="2"
+                                ry="2"></rect><line
+                                x1="8"
+                                y1="21"
+                                x2="16"
+                                y2="21"></line><line
+                                x1="12"
+                                y1="17"
+                                x2="12"
+                                y2="21"></line></svg
+                        >
+                    </div>
+                    <h3>FRONTEND</h3>
+                    <p class="animal-archetype">EL CAMALEÓN CIBERNÉTICO</p>
+                    <ul class="tech-list">
+                        <li>React / Astro</li>
+                        <li>CSS / Tailwind</li>
+                        <li>WebGL / Three.js</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Backend -->
+            <div class="skill-card backend">
+                <div class="card-inner">
+                    <div class="icon-wrapper">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="feather feather-server"
+                            ><rect
+                                x="2"
+                                y="2"
+                                width="20"
+                                height="8"
+                                rx="2"
+                                ry="2"></rect><rect
+                                x="2"
+                                y="14"
+                                width="20"
+                                height="8"
+                                rx="2"
+                                ry="2"></rect><line
+                                x1="6"
+                                y1="6"
+                                x2="6.01"
+                                y2="6"></line><line
+                                x1="6"
+                                y1="18"
+                                x2="6.01"
+                                y2="18"></line></svg
+                        >
+                    </div>
+                    <h3>BACKEND</h3>
+                    <p class="animal-archetype">EL OSO DE HIERRO</p>
+                    <ul class="tech-list">
+                        <li>Node.js / Python</li>
+                        <li>Microservicios</li>
+                        <li>APIs REST / GraphQL</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Database -->
+            <div class="skill-card database">
+                <div class="card-inner">
+                    <div class="icon-wrapper">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="feather feather-database"
+                            ><ellipse cx="12" cy="5" rx="9" ry="3"
+                            ></ellipse><path
+                                d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"
+                            ></path><path
+                                d="M3 5v14c0 1.66 4 3 9 3s 9-1.34 9-3V5"
+                            ></path></svg
+                        >
+                    </div>
+                    <h3>BASE DE DATOS</h3>
+                    <p class="animal-archetype">LA ARAÑA DE LA RED</p>
+                    <ul class="tech-list">
+                        <li>PostgreSQL / MySQL</li>
+                        <li>MongoDB / NoSQL</li>
+                        <li>Optimización de Queries</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .skills-section {
+        background: linear-gradient(
+            180deg,
+            var(--deep-jungle) 0%,
+            #0d1f1a 100%
+        );
+        position: relative;
+    }
+
+    .section-title {
+        text-align: center;
+        font-size: 3rem;
+        margin-bottom: 4rem;
+        color: var(--text-main);
+    }
+
+    .section-description {
+        text-align: center;
+        max-width: 800px;
+        margin: -3rem auto 4rem;
+        color: var(--text-dim);
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .skill-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        transition:
+            transform 0.4s ease,
+            box-shadow 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skill-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border-color: var(--neon-green);
+    }
+
+    .skill-card.backend:hover {
+        border-color: var(--cyber-purple);
+    }
+    .skill-card.database:hover {
+        border-color: var(--electric-blue);
+    }
+
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        color: var(--neon-green);
+        transition: all 0.3s;
+    }
+
+    .skill-card.backend .icon-wrapper {
+        color: var(--cyber-purple);
+    }
+    .skill-card.database .icon-wrapper {
+        color: var(--electric-blue);
+    }
+
+    .skill-card:hover .icon-wrapper {
+        background: var(--neon-green);
+        color: var(--deep-jungle);
+        box-shadow: 0 0 20px var(--neon-green);
+    }
+    .skill-card.backend:hover .icon-wrapper {
+        background: var(--cyber-purple);
+        box-shadow: 0 0 20px var(--cyber-purple);
+    }
+    .skill-card.database:hover .icon-wrapper {
+        background: var(--electric-blue);
+        box-shadow: 0 0 20px var(--electric-blue);
+    }
+
+    h3 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .animal-archetype {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+        margin-bottom: 2rem;
+        text-transform: uppercase;
+    }
+
+    .tech-list li {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        font-family: var(--font-heading);
+        letter-spacing: 1px;
+        border-left: 2px solid transparent;
+    }
+
+    .skill-card:hover .tech-list li {
+        border-left-color: var(--neon-green);
+    }
+</style>

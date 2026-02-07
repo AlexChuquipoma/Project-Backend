@@ -1,0 +1,68 @@
+---
+import ProgrammerCard from "./ProgrammerCard.astro";
+
+const programmers = [
+    {
+        name: "Alex 'Panther' Code",
+        role: "Full Stack Developer",
+        image: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?q=80&w=1000&auto=format&fit=crop", // Placeholder until we generate custom ones if needed
+        skills: ["React", "Node.js", "MongoDB"],
+        socials: { github: "#", linkedin: "#" },
+    },
+    {
+        name: "Sarah 'Viper' Script",
+        role: "Frontend Specialist",
+        image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1000&auto=format&fit=crop",
+        skills: ["Vue", "Three.js", "CSS"],
+        socials: { github: "#", twitter: "#" },
+    },
+    {
+        name: "David 'Bear' Data",
+        role: "Backend Architect",
+        image: "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?q=80&w=1000&auto=format&fit=crop",
+        skills: ["Python", "Docker", "PostgreSQL"],
+        socials: { linkedin: "#" },
+    },
+];
+---
+
+<section id="programmers" class="programmers-section section-padding">
+    <div class="container">
+        <h2 class="section-title">
+            NUESTROS <span class="neon-text-purple">OPERADORES</span>
+        </h2>
+        <p class="section-description">
+            Cada miembro de nuestro colectivo ha sido forjado en el fuego de
+            proyectos de alto impacto. Arquitectos de software, visionarios del
+            frontend y estrategas de datos unidos por un propósito: la
+            excelencia técnica.
+        </p>
+        <div class="grid">
+            {programmers.map((dev) => <ProgrammerCard {...dev} />)}
+        </div>
+    </div>
+</section>
+
+<style>
+    .section-title {
+        text-align: center;
+        font-size: 3rem;
+        margin-bottom: 4rem;
+        color: var(--text-main);
+    }
+
+    .section-description {
+        text-align: center;
+        max-width: 800px;
+        margin: -3rem auto 4rem;
+        color: var(--text-dim);
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+</style>

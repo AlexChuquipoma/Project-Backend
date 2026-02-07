@@ -1,17 +1,18 @@
 ---
-
+import Layout from "../layouts/Layout.astro";
+import Hero from "../components/Hero.astro";
+import Skills from "../components/Skills.astro";
+import ProgrammerShowcase from "../components/ProgrammerShowcase.astro";
+import ProjectGrid from "../components/ProjectGrid.astro";
+import ContactFooter from "../components/ContactFooter.astro";
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Hola Astro</h1>
-	</body>
-</html>
+<Layout title="Ciber-Portafolio | El Futuro del Código">
+	<main>
+		<Hero />
+		<Skills />
+		<ProgrammerShowcase />
+		<ProjectGrid />
+	</main>
+	<ContactFooter />
+</Layout>

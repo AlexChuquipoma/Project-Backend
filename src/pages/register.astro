@@ -1,0 +1,287 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Registro | CiberPortfolio">
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="glitch" data-text="REGISTRO">REGISTRO</h1>
+            <p class="subtitle">NUEVO PROTOCOLO DE ENLACE</p>
+
+            <form class="auth-form" action="#" method="POST">
+                <div class="input-group">
+                    <label for="name">NOMBRE DE OPERADOR</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        required
+                        placeholder="Tu Nombre"
+                    />
+                    <div class="input-line"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">CORREO ELECTRÓNICO</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        placeholder="usuario@red.global"
+                    />
+                    <div class="input-line"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">CLAVE DE ACCESO</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        placeholder="••••••••"
+                    />
+                    <div class="input-line"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirm-password">CONFIRMAR CLAVE</label>
+                    <input
+                        type="password"
+                        id="confirm-password"
+                        name="confirm-password"
+                        required
+                        placeholder="••••••••"
+                    />
+                    <div class="input-line"></div>
+                </div>
+
+                <button type="submit" class="cyber-button">
+                    INICIAR REGISTRO
+                    <span class="btn-glitch"></span>
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <p>
+                    ¿Ya tienes credenciales? <a href="/login" class="neon-link"
+                        >Iniciar Sesión</a
+                    >
+                </p>
+                <a href="/" class="back-link">Volver al Nexus</a>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        padding-top: 4rem; /* Extra padding for mobile */
+    }
+
+    .auth-card {
+        background: rgba(5, 10, 8, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        padding: 3rem;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 0 40px rgba(188, 19, 254, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--cyber-purple),
+            transparent
+        );
+        animation: scan-top 2s linear infinite;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        color: var(--text-main);
+        text-align: center;
+        margin-bottom: 0.5rem;
+        letter-spacing: 4px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: var(--neon-green);
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+        margin-bottom: 3rem;
+    }
+
+    .input-group {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    label {
+        display: block;
+        color: var(--text-dim);
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        color: var(--text-main);
+        font-family: var(--font-body);
+        font-size: 1.1rem;
+        padding: 0.5rem 0;
+        outline: none;
+    }
+
+    .input-line {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: var(--text-dim);
+        transition: all 0.3s;
+    }
+
+    input:focus ~ .input-line {
+        background: var(--cyber-purple);
+        box-shadow: 0 0 10px var(--cyber-purple);
+    }
+
+    .role-selector {
+        margin-bottom: 2rem;
+        color: var(--text-dim);
+    }
+
+    .role-selector p {
+        font-size: 0.8rem;
+        margin-bottom: 1rem;
+        letter-spacing: 1px;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 2rem;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+
+    .radio-label input {
+        display: none;
+    }
+
+    .custom-radio {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--text-dim);
+        border-radius: 50%;
+        margin-right: 0.5rem;
+        display: inline-block;
+        position: relative;
+    }
+
+    .radio-label input:checked + .custom-radio {
+        border-color: var(--cyber-purple);
+        box-shadow: 0 0 10px var(--cyber-purple);
+    }
+
+    .radio-label input:checked + .custom-radio::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 8px;
+        height: 8px;
+        background: var(--cyber-purple);
+        border-radius: 50%;
+    }
+
+    .cyber-button {
+        width: 100%;
+        padding: 1rem;
+        background: transparent;
+        border: 1px solid var(--cyber-purple);
+        color: var(--cyber-purple);
+        font-family: var(--font-heading);
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .cyber-button:hover {
+        background: var(--cyber-purple);
+        color: white;
+        box-shadow: 0 0 20px var(--cyber-purple);
+    }
+
+    .auth-links {
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-dim);
+    }
+
+    .neon-link {
+        color: var(--neon-green);
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    .neon-link:hover {
+        text-shadow: 0 0 10px var(--neon-green);
+    }
+
+    .back-link {
+        display: block;
+        margin-top: 1rem;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        opacity: 0.7;
+    }
+
+    .back-link:hover {
+        opacity: 1;
+        color: var(--text-main);
+    }
+
+    @keyframes scan-top {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+</style>
