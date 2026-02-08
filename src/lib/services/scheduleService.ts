@@ -34,7 +34,7 @@ export async function createSchedule(data: CreateScheduleRequest): Promise<Sched
     return response.json();
 }
 
-export async function deleteSchedule(id: string): Promise<void> {
+export async function deleteSchedule(id: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/schedules/${id}`, {
         method: "DELETE",
         headers: getAuthHeader(),

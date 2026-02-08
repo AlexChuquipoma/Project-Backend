@@ -15,6 +15,8 @@ import Layout from "../../layouts/Layout.astro";
             <button class="tab-btn active" data-tab="projects">PROYECTOS</button
             >
             <button class="tab-btn" data-tab="requests">SOLICITUDES</button>
+            <button class="tab-btn" data-tab="schedule">MI HORARIO</button>
+            <button class="tab-btn" data-tab="stats">ESTADÍSTICAS</button>
             <button class="tab-btn" data-tab="profile"
                 >PERFIL PROFESIONAL</button
             >
@@ -48,7 +50,6 @@ import Layout from "../../layouts/Layout.astro";
                 </div>
             </div>
 
-            <!-- Requests View -->
             <div id="requests-view" class="view-section hidden">
                 <div class="view-header">
                     <h2>SOLICITUDES RECIBIDAS</h2>
@@ -70,6 +71,44 @@ import Layout from "../../layouts/Layout.astro";
                             <!-- Requests injected here -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Schedule View -->
+            <div id="schedule-view" class="view-section hidden">
+                <div class="view-header">
+                    <h2>GESTIÓN DE DISPONIBILIDAD</h2>
+                    <button id="add-schedule-btn" class="cyber-button small"
+                        >+ NUEVO HORARIO</button
+                    >
+                </div>
+
+                <div class="schedule-manager">
+                    <div class="schedule-list" id="schedule-list">
+                        <!-- Schedules will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats View -->
+            <div id="stats-view" class="view-section hidden">
+                <div class="view-header">
+                    <h2>RENDIMIENTO DE ASESORÍAS</h2>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <canvas id="statusChart"></canvas>
+                        <p class="chart-label">ESTADO DE ASESORÍAS</p>
+                    </div>
+                    <div class="stat-card">
+                        <canvas id="modalityChart"></canvas>
+                        <p class="chart-label">MODALIDAD PREFERIDA</p>
+                    </div>
+                </div>
+
+                <div class="mini-stats" id="mini-stats-container">
+                    <!-- Numbers will be injected here -->
                 </div>
             </div>
 
@@ -290,6 +329,10 @@ import Layout from "../../layouts/Layout.astro";
             if (view) {
                 view.classList.remove("hidden");
                 view.classList.add("active");
+
+                // Load specific data if needed
+                if (viewId === "stats-view") loadStats();
+                if (viewId === "schedule-view") loadSchedules();
             }
         });
     });
@@ -732,6 +775,223 @@ import Layout from "../../layouts/Layout.astro";
             closeModal();
             (projectForm as HTMLFormElement).reset();
         });
+    }
+
+    // Stats and Chart Implementation
+    let statusChart: any = null;
+    let modalityChart: any = null;
+
+    async function loadStats() {
+        try {
+            const user = JSON.parse(localStorage.getItem("ciber_user") || "{}");
+            if (!user.id) return;
+
+            const { getProgrammerStats } =
+                await import("../../lib/services/advisoryService");
+            const stats = await getProgrammerStats(parseInt(user.id));
+
+            // Update mini stats
+            const container = document.getElementById("mini-stats-container");
+            if (container) {
+                container.innerHTML = `
+                    <div class="mini-stat-card">
+                        <h4>${stats.total}</h4>
+                        <p>Total Asesorías</p>
+                    </div>
+                    <div class="mini-stat-card">
+                        <h4>${stats.completed}</h4>
+                        <p>Completadas</p>
+                    </div>
+                    <div class="mini-stat-card">
+                        <h4>${stats.pending}</h4>
+                        <p>Pendientes</p>
+                    </div>
+                `;
+            }
+
+            // Render Charts
+            const Chart = (await import("chart.js/auto")).default;
+
+            // Status Chart
+            const ctxStatus = document.getElementById(
+                "statusChart",
+            ) as HTMLCanvasElement;
+            if (ctxStatus) {
+                if (statusChart) statusChart.destroy();
+                statusChart = new Chart(ctxStatus, {
+                    type: "doughnut",
+                    data: {
+                        labels: [
+                            "Pendientes",
+                            "Aceptadas",
+                            "Rechazadas",
+                            "Completadas",
+                        ],
+                        datasets: [
+                            {
+                                data: [
+                                    stats.pending,
+                                    stats.accepted,
+                                    stats.rejected,
+                                    stats.completed,
+                                ],
+                                backgroundColor: [
+                                    "#facc15",
+                                    "#39ff14",
+                                    "#ff4444",
+                                    "#00f3ff",
+                                ],
+                                borderWidth: 0,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: { color: "#a0a0a0" },
+                            },
+                        },
+                    },
+                });
+            }
+
+            // Modality Chart
+            const ctxModality = document.getElementById(
+                "modalityChart",
+            ) as HTMLCanvasElement;
+            if (ctxModality) {
+                if (modalityChart) modalityChart.destroy();
+                modalityChart = new Chart(ctxModality, {
+                    type: "pie",
+                    data: {
+                        labels: ["Virtual", "Presencial"],
+                        datasets: [
+                            {
+                                data: [stats.virtual, stats.presencial],
+                                backgroundColor: ["#00f3ff", "#facc15"],
+                                borderWidth: 0,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: { color: "#a0a0a0" },
+                            },
+                        },
+                    },
+                });
+            }
+        } catch (error) {
+            console.error("Error loading stats:", error);
+        }
+    }
+
+    // Schedule Management
+    async function loadSchedules() {
+        const listContainer = document.getElementById("schedule-list");
+        if (!listContainer) return;
+
+        try {
+            const { getAllSchedules } =
+                await import("../../lib/services/scheduleService");
+            const user = JSON.parse(localStorage.getItem("ciber_user") || "{}");
+            const schedules = await getAllSchedules();
+
+            // Filter by current programmer
+            const mySchedules = schedules.filter(
+                (s: any) => s.programmerId === parseInt(user.id),
+            );
+
+            listContainer.innerHTML = mySchedules
+                .map(
+                    (s: any) => `
+                <div class="schedule-card">
+                    <button class="delete-schedule-btn" onclick="window.deleteScheduleItem(${s.id})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                    </button>
+                    <div class="schedule-info">
+                        <span class="modality-badge ${s.modality.toLowerCase()}">${s.modality}</span>
+                        <h4>${s.date}</h4>
+                        <p>${s.time} ${parseInt(s.time.split(":")[0]) >= 12 ? "PM" : "AM"}</p>
+                        <span class="status ${s.status.toLowerCase()}">${s.status === "AVAILABLE" ? "DISPONIBLE" : "RESERVADO"}</span>
+                    </div>
+                </div>
+            `,
+                )
+                .join("");
+
+            if (mySchedules.length === 0) {
+                listContainer.innerHTML =
+                    '<p class="no-data">No tienes horarios registrados.</p>';
+            }
+        } catch (error) {
+            console.error("Error loading schedules:", error);
+        }
+    }
+
+    // Expose deleteScheduleItem to window
+    (window as any).deleteScheduleItem = async (id: number) => {
+        if (confirm("¿Seguro que quieres eliminar este horario?")) {
+            try {
+                const { deleteSchedule } =
+                    await import("../../lib/services/scheduleService");
+                await deleteSchedule(id);
+                loadSchedules();
+            } catch (error) {
+                alert("Error al eliminar horario");
+            }
+        }
+    };
+
+    // Add Schedule Button Handler
+    const addScheduleBtn = document.getElementById("add-schedule-btn");
+    if (addScheduleBtn) {
+        addScheduleBtn.addEventListener("click", () => {
+            // Re-use current modal or create a new one? Let's implement a simple prompt for now
+            // or create a dedicated modal for schedules if user wants more complexity
+            const date = prompt(
+                "Fecha (YYYY-MM-DD):",
+                new Date().toISOString().split("T")[0],
+            );
+            const time = prompt("Hora (HH:mm):", "10:00");
+            const modality = prompt(
+                "Modalidad (VIRTUAL o PRESENCIAL):",
+                "VIRTUAL",
+            );
+
+            if (date && time && modality) {
+                createScheduleItem(date, time, modality);
+            }
+        });
+    }
+
+    async function createScheduleItem(
+        date: string,
+        time: string,
+        modality: string,
+    ) {
+        try {
+            const { createSchedule } =
+                await import("../../lib/services/scheduleService");
+            const user = JSON.parse(localStorage.getItem("ciber_user") || "{}");
+
+            await createSchedule({
+                programmerId: parseInt(user.id),
+                date,
+                time,
+                modality: modality.toUpperCase() as any,
+            });
+
+            alert("✅ Horario creado correctamente");
+            loadSchedules();
+        } catch (error: any) {
+            alert("❌ Error: " + error.message);
+        }
     }
 </script>
 
@@ -1411,6 +1671,13 @@ import Layout from "../../layouts/Layout.astro";
         .filter-group {
             flex-wrap: wrap;
             justify-content: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
         }
 
         .projects-grid {

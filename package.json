@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "astro": "^5.17.1",
+    "chart.js": "^4.5.1",
     "firebase": "^12.9.0"
   }
 }
