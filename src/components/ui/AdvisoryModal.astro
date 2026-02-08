@@ -342,7 +342,7 @@ const programmers = [
     ) as HTMLInputElement;
 
     // Function to open modal (can be called globally)
-    window.openAdvisoryModal = () => {
+    (window as any).openAdvisoryModal = () => {
         if (modal) {
             modal.classList.add("active");
             // Reset state

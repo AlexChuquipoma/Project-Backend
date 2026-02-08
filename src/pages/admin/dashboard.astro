@@ -1,0 +1,870 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Panel de Administración | CiberPortfolio">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1 class="glitch" data-text="PANEL DE ADMINISTRACIÓN">
+                PANEL DE ADMINISTRACIÓN
+            </h1>
+            <p class="subtitle">CONTROL TOTAL DEL SISTEMA</p>
+        </header>
+
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" data-tab="users">USUARIOS</button>
+            <button class="tab-btn" data-tab="schedules">HORARIOS</button>
+            <button class="tab-btn" data-tab="advisories">ASESORÍAS</button>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Users View -->
+            <div id="users-view" class="view-section active">
+                <div class="view-header">
+                    <h2>GESTIÓN DE USUARIOS</h2>
+                    <input
+                        type="text"
+                        id="user-search"
+                        placeholder="Buscar usuario..."
+                        class="cyber-input"
+                    />
+                </div>
+                <div class="table-container">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>NOMBRE</th>
+                                <th>EMAIL</th>
+                                <th>ROL</th>
+                                <th>ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-body">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Schedules View -->
+            <div id="schedules-view" class="view-section hidden">
+                <div class="view-header">
+                    <h2>GESTIÓN DE HORARIOS</h2>
+                </div>
+                <div class="schedule-grid">
+                    <div class="control-panel">
+                        <h3>Asignar Disponibilidad</h3>
+                        <form id="schedule-form">
+                            <div class="input-group">
+                                <label>PROGRAMADOR</label>
+                                <select
+                                    id="prog-select"
+                                    name="programmerId"
+                                    required
+                                >
+                                    <option value="" disabled selected
+                                        >Seleccionar...</option
+                                    >
+                                    <!-- Injected -->
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>FECHA</label>
+                                <input type="date" name="date" required />
+                            </div>
+                            <div class="input-group">
+                                <label>HORA</label>
+                                <input type="time" name="time" required />
+                            </div>
+                            <button type="submit" class="cyber-button"
+                                >AGREGAR HORARIO</button
+                            >
+                        </form>
+                    </div>
+                    <div class="list-panel">
+                        <h3>Horarios Activos</h3>
+                        <ul id="schedule-list" class="cyber-list">
+                            <!-- Injected -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advisories View -->
+            <div id="advisories-view" class="view-section hidden">
+                <div class="view-header">
+                    <h2>TODAS LAS ASESORÍAS</h2>
+                </div>
+                <div class="table-container">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>FECHA</th>
+                                <th>PROGRAMADOR</th>
+                                <th>USUARIO</th>
+                                <th>ESTADO</th>
+                                <th>NOTAS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="advisories-body">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    // Auth Check
+    const userStr = localStorage.getItem("ciber_user");
+    if (!userStr) {
+        window.location.href = "/auth/login";
+    } else {
+        const user = JSON.parse(userStr);
+        if (user.role !== "admin") {
+            window.location.href = "/";
+        }
+    }
+
+    // Tabs Logic
+    const tabs = document.querySelectorAll(".tab-btn");
+    const views = document.querySelectorAll(".view-section");
+
+    tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            tabs.forEach((t) => t.classList.remove("active"));
+            views.forEach((v) => v.classList.add("hidden"));
+            views.forEach((v) => v.classList.remove("active"));
+
+            tab.classList.add("active");
+            const viewId = (tab as HTMLElement).dataset.tab + "-view";
+            const view = document.getElementById(viewId);
+            if (view) {
+                view.classList.remove("hidden");
+                view.classList.add("active");
+            }
+        });
+    });
+
+    // --- USERS MANAGEMENT ---
+    const usersBody = document.getElementById("users-body");
+    const userSearch = document.getElementById("user-search");
+
+    function loadUsers() {
+        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
+        const searchTerm = (userSearch as HTMLInputElement).value.toLowerCase();
+
+        const filteredUsers = users.filter(
+            (u: any) =>
+                u.name.toLowerCase().includes(searchTerm) ||
+                u.email.toLowerCase().includes(searchTerm),
+        );
+
+        if (usersBody) {
+            usersBody.innerHTML = filteredUsers
+                .map(
+                    (u: any) => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <span class="user-name">${u.name}</span>
+                        </div>
+                    </td>
+                    <td>${u.email}</td>
+                    <td>
+                        <select onchange="window.updateUserRole('${u.id}', this.value)" class="role-select ${u.role}">
+                            <option value="user" ${u.role === "user" ? "selected" : ""}>Usuario</option>
+                            <option value="programmer" ${u.role === "programmer" ? "selected" : ""}>Programador</option>
+                            <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="action-btn delete" onclick="window.deleteUser('${u.id}')">ELIMINAR</button>
+                    </td>
+                </tr>
+            `,
+                )
+                .join("");
+        }
+    }
+
+    if (userSearch) userSearch.addEventListener("input", loadUsers);
+
+    (window as any).updateUserRole = (id: string, newRole: string) => {
+        if (
+            !confirm(
+                `¿Estás seguro de cambiar el rol de este usuario a '${newRole.toUpperCase()}'?`,
+            )
+        ) {
+            loadUsers(); // Revert visual change
+            return;
+        }
+
+        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
+        const index = users.findIndex((u: any) => u.id === id);
+        if (index !== -1) {
+            users[index].role = newRole;
+            localStorage.setItem("ciber_user_db", JSON.stringify(users));
+
+            // Sync with session if it's me
+            const currentUser = JSON.parse(
+                localStorage.getItem("ciber_user") || "{}",
+            );
+            if (currentUser.id === id) {
+                currentUser.role = newRole;
+                localStorage.setItem("ciber_user", JSON.stringify(currentUser));
+                if (newRole !== "admin") location.reload();
+            }
+            loadUsers();
+            loadProgrammerOptions();
+        }
+    };
+
+    (window as any).deleteUser = (id: string) => {
+        if (
+            confirm(
+                "⚠ ADVERTENCIA ⚠\n\n¿Estás seguro de ELIMINAR a este usuario permanentemente?\nEsta acción no se puede deshacer.",
+            )
+        ) {
+            let users = JSON.parse(
+                localStorage.getItem("ciber_user_db") || "[]",
+            );
+            users = users.filter((u: any) => u.id !== id);
+            localStorage.setItem("ciber_user_db", JSON.stringify(users));
+            loadUsers();
+        }
+    };
+
+    // --- SCHEDULE MANAGEMENT ---
+    const scheduleForm = document.getElementById("schedule-form");
+    const progSelect = document.getElementById("prog-select");
+    const scheduleList = document.getElementById("schedule-list");
+
+    function loadProgrammerOptions() {
+        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
+        const programmers = users.filter((u: any) => u.role === "programmer");
+
+        if (progSelect) {
+            progSelect.innerHTML =
+                '<option value="" disabled selected>Seleccionar Programador...</option>' +
+                programmers
+                    .map(
+                        (p: any) =>
+                            `<option value="${p.id}">${p.name}</option>`,
+                    )
+                    .join("");
+        }
+    }
+
+    function loadSchedules() {
+        const schedules = JSON.parse(
+            localStorage.getItem("ciber_schedules") || "[]",
+        );
+        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
+
+        if (scheduleList) {
+            if (schedules.length === 0) {
+                scheduleList.innerHTML =
+                    '<li class="empty-state">No hay horarios activos configurados.</li>';
+                return;
+            }
+
+            scheduleList.innerHTML = schedules
+                .map((s: any) => {
+                    const prog = users.find(
+                        (u: any) => u.id === s.programmerId,
+                    );
+                    const progName = prog ? prog.name : "Usuario Eliminado";
+                    return `
+                    <li class="schedule-item">
+                        <div class="schedule-info">
+                            <span class="prog-name">${progName}</span>
+                            <span class="schedule-date">${s.date} <span class="time-badge">${s.time}</span></span>
+                        </div>
+                        <button class="delete-btn" onclick="window.deleteSchedule('${s.id}')">
+                            🗑️
+                        </button>
+                    </li>
+                `;
+                })
+                .join("");
+        }
+    }
+
+    if (scheduleForm) {
+        scheduleForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const formData = new FormData(scheduleForm as HTMLFormElement);
+
+            // Basic Validation
+            if (!formData.get("programmerId")) {
+                alert("Debes seleccionar un programador.");
+                return;
+            }
+
+            const newSchedule = {
+                id: Date.now().toString(),
+                programmerId: formData.get("programmerId"),
+                date: formData.get("date"),
+                time: formData.get("time"),
+                status: "available",
+            };
+
+            const schedules = JSON.parse(
+                localStorage.getItem("ciber_schedules") || "[]",
+            );
+            schedules.push(newSchedule);
+            localStorage.setItem("ciber_schedules", JSON.stringify(schedules));
+
+            loadSchedules();
+            (scheduleForm as HTMLFormElement).reset();
+        });
+    }
+
+    (window as any).deleteSchedule = (id: string) => {
+        let schedules = JSON.parse(
+            localStorage.getItem("ciber_schedules") || "[]",
+        );
+        schedules = schedules.filter((s: any) => s.id !== id);
+        localStorage.setItem("ciber_schedules", JSON.stringify(schedules));
+        loadSchedules();
+    };
+
+    // --- ADVISORIES VIEW ---
+    const advisoriesBody = document.getElementById("advisories-body");
+
+    function loadAdvisories() {
+        const requests = JSON.parse(
+            localStorage.getItem("ciber_requests") || "[]",
+        );
+        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
+
+        if (advisoriesBody) {
+            if (requests.length === 0) {
+                advisoriesBody.innerHTML = `<tr><td colspan="5" class="text-center">No hay asesorías registradas en el sistema.</td></tr>`;
+                return;
+            }
+
+            advisoriesBody.innerHTML = requests
+                .map((r: any) => {
+                    // Resolve Programmer Name
+                    let progName = "Desconocido";
+                    if (r.programmerId) {
+                        const prog = users.find(
+                            (u: any) => u.id === r.programmerId,
+                        );
+                        if (prog) progName = prog.name;
+                        else if (r.programmerName) progName = r.programmerName;
+                    } else if (r.programmerName) {
+                        progName = r.programmerName;
+                    }
+
+                    return `
+                <tr>
+                    <td>${new Date(r.timestamp).toLocaleDateString()}</td>
+                    <td><span class="prog-badge">${progName}</span></td>
+                    <td>
+                        <div class="user-info-sm">
+                            <span class="u-name">${r.userName}</span>
+                            <span class="u-email">${r.userEmail}</span>
+                        </div>
+                    </td>
+                    <td><span class="status-badge ${r.status}">${getStatusLabel(r.status)}</span></td>
+                    <td class="notes-cell">${r.notes || "<span class='dim'>-</span>"}</td>
+                </tr>
+            `;
+                })
+                .join("");
+        }
+    }
+
+    function getStatusLabel(status: string) {
+        switch (status) {
+            case "pending":
+                return "⏳ Pendiente";
+            case "accepted":
+                return "✅ Aprobada";
+            case "rejected":
+                return "❌ Rechazada";
+            default:
+                return status;
+        }
+    }
+
+    // INITIALIZATION
+    loadUsers();
+    loadProgrammerOptions();
+    loadSchedules();
+    loadAdvisories();
+</script>
+
+<style>
+    .dashboard-container {
+        padding: 6rem 2rem 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 4rem;
+        position: relative;
+    }
+
+    .dashboard-header h1 {
+        font-size: 3.5rem;
+        color: var(--text-main);
+        letter-spacing: 6px;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 20px rgba(188, 19, 254, 0.4);
+    }
+
+    .subtitle {
+        color: var(--neon-green);
+        letter-spacing: 3px;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+
+    /* TABS */
+    .dashboard-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .tab-btn {
+        background: rgba(10, 15, 12, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-dim);
+        padding: 1rem 2.5rem;
+        font-family: var(--font-heading);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1rem;
+        letter-spacing: 2px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tab-btn::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--cyber-purple);
+        transform: scaleX(0);
+        transition: transform 0.3s;
+        transform-origin: right;
+    }
+
+    .tab-btn:hover {
+        color: white;
+        border-color: rgba(188, 19, 254, 0.5);
+    }
+
+    .tab-btn.active {
+        color: var(--cyber-purple);
+        background: rgba(188, 19, 254, 0.05);
+        border-color: var(--cyber-purple);
+        box-shadow: 0 0 20px rgba(188, 19, 254, 0.15);
+    }
+
+    .tab-btn.active::before {
+        transform: scaleX(1);
+        transform-origin: left;
+    }
+
+    /* SECTIONS */
+    .view-section {
+        background: rgba(5, 8, 10, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(188, 19, 254, 0.2); /* Purple border for Admin */
+        padding: 3rem;
+        border-radius: 16px;
+        min-height: 500px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .view-section.hidden {
+        display: none;
+    }
+
+    .view-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 1.5rem;
+    }
+
+    .view-header h2 {
+        color: var(--text-main);
+        margin: 0;
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+    }
+
+    /* INPUTS */
+    .cyber-input,
+    .cyber-select,
+    .input-group input,
+    .input-group select {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 0.8rem 1.2rem;
+        border-radius: 6px;
+        font-family: inherit;
+        transition: all 0.3s;
+        min-width: 250px;
+    }
+
+    .cyber-input:focus,
+    .input-group input:focus,
+    .input-group select:focus {
+        outline: none;
+        border-color: var(--neon-green);
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);
+    }
+
+    /* TABLES */
+    .table-container {
+        overflow-x: auto;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+    }
+
+    .cyber-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        color: var(--text-dim);
+    }
+
+    .cyber-table th {
+        background: rgba(188, 19, 254, 0.1);
+        color: var(--neon-green);
+        text-transform: uppercase;
+        padding: 1.2rem 1.5rem;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        border-bottom: 2px solid rgba(188, 19, 254, 0.3);
+        text-align: left;
+    }
+
+    .cyber-table td {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        vertical-align: middle;
+        transition: background 0.2s;
+    }
+
+    .cyber-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+        color: white;
+    }
+
+    /* ROLE SELECT - Custom Styling */
+    .role-select {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: var(--font-body);
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        min-width: 120px;
+        text-align: center;
+    }
+
+    .role-select:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: var(--cyber-purple);
+    }
+
+    .role-select:focus {
+        outline: none;
+        box-shadow: 0 0 10px rgba(188, 19, 254, 0.3);
+    }
+
+    .role-select.admin {
+        border-color: var(--cyber-purple);
+        color: var(--cyber-purple);
+        font-weight: bold;
+    }
+    .role-select.programmer {
+        border-color: var(--neon-green);
+        color: var(--neon-green);
+    }
+
+    /* ACTION BUTTONS */
+    .action-btn {
+        background: rgba(255, 0, 0, 0.1);
+        border: 1px solid rgba(255, 0, 0, 0.5);
+        color: #ff4d4d;
+        padding: 0.5rem 1.2rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+        border-radius: 4px;
+        font-family: var(--font-heading);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: bold;
+    }
+
+    .action-btn:hover {
+        background: #ff4d4d;
+        color: white;
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+        transform: scale(1.05);
+    }
+
+    .cyber-button {
+        background: linear-gradient(45deg, var(--cyber-purple), #9d00e0);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        width: 100%;
+        font-weight: bold;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cyber-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(188, 19, 254, 0.4);
+    }
+
+    /* SCHEDULE LAYOUT */
+    .schedule-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .control-panel {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .control-panel h3,
+    .list-panel h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        color: var(--text-main);
+        font-size: 1.2rem;
+        border-left: 3px solid var(--neon-green);
+        padding-left: 1rem;
+    }
+
+    .list-panel {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .cyber-list {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+
+    .schedule-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.8rem;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .schedule-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(99, 242, 255, 0.2);
+    }
+
+    .schedule-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .prog-name {
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .schedule-date {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .time-badge {
+        background: rgba(99, 242, 255, 0.1);
+        color: #63f2ff;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .delete-btn {
+        opacity: 0.5;
+        transition: opacity 0.2s;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    .delete-btn:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    /* STATUS BADGES */
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .status-badge.pending {
+        background: rgba(255, 165, 0, 0.15);
+        color: orange;
+        border: 1px solid rgba(255, 165, 0, 0.3);
+    }
+
+    .status-badge.accepted {
+        background: rgba(57, 255, 20, 0.15);
+        color: var(--neon-green);
+        border: 1px solid rgba(57, 255, 20, 0.3);
+    }
+
+    .status-badge.rejected {
+        background: rgba(255, 50, 50, 0.15);
+        color: #ff4d4d;
+        border: 1px solid rgba(255, 50, 50, 0.3);
+    }
+
+    .user-info-sm {
+        display: flex;
+        flex-direction: column;
+    }
+    .u-name {
+        color: white;
+        font-weight: 500;
+    }
+    .u-email {
+        font-size: 0.85rem;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 6rem 1rem 1rem;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .dashboard-tabs {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tab-btn {
+            width: 100%;
+            padding: 1rem;
+        }
+
+        .view-section {
+            padding: 1.5rem;
+        }
+
+        .schedule-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .control-panel,
+        .list-panel {
+            padding: 1rem;
+        }
+
+        .view-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .view-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .cyber-input {
+            width: 100%;
+        }
+
+        .table-container {
+            margin: 0 -1rem; /* Negative margin to span full width */
+            border-radius: 0;
+            padding: 0 1rem; /* Padding for scroll content */
+        }
+
+        .cyber-table th,
+        .cyber-table td {
+            white-space: nowrap; /* Force horizontal scroll */
+            padding: 1rem;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+

@@ -1,0 +1,1413 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Dashboard de Operador | CiberPortfolio">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1 class="glitch" data-text="PANEL DE CONTROL">
+                PANEL DE CONTROL
+            </h1>
+            <p class="subtitle">GESTIÓN DE PROYECTOS Y SOLICITUDES</p>
+        </header>
+
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" data-tab="projects">PROYECTOS</button
+            >
+            <button class="tab-btn" data-tab="requests">SOLICITUDES</button>
+            <button class="tab-btn" data-tab="profile">MI PERFIL</button>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Projects View -->
+            <div id="projects-view" class="view-section active">
+                <div class="view-header">
+                    <h2>MIS PROYECTOS</h2>
+                    <div class="header-actions">
+                        <div class="filter-group">
+                            <button class="filter-btn active" data-filter="all"
+                                >TODOS</button
+                            >
+                            <button class="filter-btn" data-filter="Profesional"
+                                >PROFESIONAL</button
+                            >
+                            <button class="filter-btn" data-filter="Académico"
+                                >ACADÉMICO</button
+                            >
+                        </div>
+                        <button id="add-project-btn" class="cyber-button small">
+                            + NUEVO PROYECTO
+                        </button>
+                    </div>
+                </div>
+
+                <div id="projects-grid" class="projects-grid">
+                    <!-- Projects injected here -->
+                </div>
+            </div>
+
+            <!-- Requests View -->
+            <div id="requests-view" class="view-section hidden">
+                <div class="view-header">
+                    <h2>SOLICITUDES RECIBIDAS</h2>
+                </div>
+
+                <div class="requests-table-container">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>FECHA</th>
+                                <th>USUARIO</th>
+                                <th>CORREO</th>
+                                <th>NOTA</th>
+                                <th>ESTADO</th>
+                                <th>ACCIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-body">
+                            <!-- Requests injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profile-view" class="view-section hidden">
+                <div class="view-header">
+                    <h2>MI PERFIL</h2>
+                </div>
+
+                <form id="profile-form" class="profile-form">
+                    <div class="form-section">
+                        <h3><span class="icon">📝</span> BIOGRAFÍA</h3>
+                        <div class="input-group">
+                            <label>Título Profesional</label>
+                            <input
+                                type="text"
+                                id="profile-role"
+                                name="role"
+                                placeholder="Ej: Full Stack Developer, Backend Architect..."
+                                required
+                            />
+                        </div>
+                        <div class="input-group">
+                            <label>Descripción Profesional</label>
+                            <textarea
+                                id="profile-bio"
+                                name="bio"
+                                rows="4"
+                                placeholder="Cuéntales a tus futuros clientes sobre tu experiencia..."
+                                required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><span class="icon">⚡</span> HABILIDADES</h3>
+                        <div class="input-group">
+                            <label
+                                >Frameworks y Tecnologías (separadas por coma)</label
+                            >
+                            <input
+                                type="text"
+                                id="profile-skills"
+                                name="skills"
+                                placeholder="React, Node.js, MongoDB, TypeScript, AWS"
+                                required
+                            />
+                            <small class="help-text"
+                                >Ejemplo: React, Node.js, MongoDB</small
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><span class="icon">🔗</span> REDES SOCIALES</h3>
+                        <div class="row">
+                            <div class="input-group">
+                                <label>GitHub</label>
+                                <input
+                                    type="url"
+                                    id="profile-github"
+                                    name="github"
+                                    placeholder="https://github.com/tu-usuario"
+                                />
+                            </div>
+                            <div class="input-group">
+                                <label>LinkedIn</label>
+                                <input
+                                    type="url"
+                                    id="profile-linkedin"
+                                    name="linkedin"
+                                    placeholder="https://linkedin.com/in/tu-usuario"
+                                />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="input-group">
+                                <label>Instagram</label>
+                                <input
+                                    type="url"
+                                    id="profile-instagram"
+                                    name="instagram"
+                                    placeholder="https://instagram.com/tu-usuario"
+                                />
+                            </div>
+                            <div class="input-group">
+                                <label>WhatsApp</label>
+                                <input
+                                    type="url"
+                                    id="profile-whatsapp"
+                                    name="whatsapp"
+                                    placeholder="https://wa.me/1234567890"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="cyber-button">
+                            💾 GUARDAR CAMBIOS
+                        </button>
+                        <div
+                            id="profile-success"
+                            class="success-message hidden"
+                        >
+                            ✓ Perfil actualizado correctamente
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Project Modal -->
+    <div id="project-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="close-project-modal" class="close-btn">&times;</button>
+            <h2 id="modal-title">REGISTRAR PROYECTO</h2>
+            <form id="project-form">
+                <div class="input-group">
+                    <label>NOMBRE DEL PROYECTO</label>
+                    <input
+                        type="text"
+                        name="name"
+                        required
+                        placeholder="Ej: Sistema de Gestión IA"
+                    />
+                </div>
+                <div class="row">
+                    <div class="input-group">
+                        <label>TIPO</label>
+                        <select name="type" required>
+                            <option value="Profesional">Profesional</option>
+                            <option value="Académico">Académico</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>ROL</label>
+                        <select name="role" required>
+                            <option value="Full Stack">Full Stack</option>
+                            <option value="Frontend">Frontend</option>
+                            <option value="Backend">Backend</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>DESCRIPCIÓN</label>
+                    <textarea name="description" rows="3" required></textarea>
+                </div>
+                <div class="input-group">
+                    <label>TECNOLOGÍAS (Separadas por coma)</label>
+                    <input
+                        type="text"
+                        name="techs"
+                        placeholder="React, Node.js, MongoDB"
+                        required
+                    />
+                </div>
+                <div class="input-group">
+                    <label>URL REPOSITORIO</label>
+                    <input
+                        type="url"
+                        name="repoUrl"
+                        placeholder="https://github.com/..."
+                        required
+                    />
+                </div>
+                <div class="input-group">
+                    <label>URL DESPLIEGUE</label>
+                    <input
+                        type="url"
+                        name="deployUrl"
+                        placeholder="https://..."
+                        required
+                    />
+                </div>
+                <div class="input-group">
+                    <label>URL IMAGEN</label>
+                    <input
+                        type="url"
+                        name="imageUrl"
+                        placeholder="https://... o dejar vacío para default"
+                    />
+                </div>
+                <button type="submit" id="submit-btn" class="cyber-button"
+                    >GUARDAR PROYECTO</button
+                >
+            </form>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    // Auth Check
+    const userStr = localStorage.getItem("ciber_user");
+    if (!userStr) {
+        window.location.href = "/auth/login";
+    } else {
+        const user = JSON.parse(userStr);
+        if (user.role !== "programmer") {
+            alert("Acceso denegado: Área restringida a Operadores.");
+            window.location.href = "/";
+        }
+    }
+
+    // Tabs Logic
+    const tabs = document.querySelectorAll(".tab-btn");
+    const views = document.querySelectorAll(".view-section");
+
+    tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            tabs.forEach((t) => t.classList.remove("active"));
+            views.forEach((v) => v.classList.add("hidden"));
+            views.forEach((v) => v.classList.remove("active"));
+
+            tab.classList.add("active");
+            const viewId = (tab as HTMLElement).dataset.tab + "-view";
+            const view = document.getElementById(viewId);
+            if (view) {
+                view.classList.remove("hidden");
+                view.classList.add("active");
+            }
+        });
+    });
+
+    // Project Logic
+    const projectModal = document.getElementById("project-modal");
+    const addProjectBtn = document.getElementById("add-project-btn");
+    const closeProjectBtn = document.getElementById("close-project-modal");
+    const projectForm = document.getElementById("project-form");
+    const projectsGrid = document.getElementById("projects-grid");
+    const modalTitle = document.getElementById("modal-title");
+    const submitBtn = document.getElementById("submit-btn");
+
+    let isEditing = false;
+    let currentEditId: number | null = null;
+
+    if (addProjectBtn && projectModal) {
+        addProjectBtn.addEventListener("click", () => {
+            openModal();
+        });
+    }
+
+    const openModal = (editMode = false) => {
+        if (!projectModal) return;
+
+        projectModal.classList.remove("hidden");
+        setTimeout(() => {
+            projectModal.classList.add("active");
+        }, 10);
+
+        if (modalTitle && submitBtn) {
+            if (editMode) {
+                modalTitle.textContent = "EDITAR PROYECTO";
+                submitBtn.textContent = "ACTUALIZAR PROYECTO";
+            } else {
+                modalTitle.textContent = "REGISTRAR PROYECTO";
+                submitBtn.textContent = "GUARDAR PROYECTO";
+                (projectForm as HTMLFormElement).reset();
+                isEditing = false;
+                currentEditId = null;
+            }
+        }
+    };
+
+    const closeModal = () => {
+        if (projectModal) {
+            projectModal.classList.remove("active");
+            setTimeout(() => {
+                projectModal.classList.add("hidden");
+            }, 300); // Wait for transition
+        }
+    };
+    if (closeProjectBtn) closeProjectBtn.addEventListener("click", closeModal);
+
+    // Initial Load & Functions
+    // Filter Logic
+    let currentFilter = "all";
+    const filterBtns = document.querySelectorAll(".filter-btn");
+
+    filterBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            filterBtns.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentFilter = (btn as HTMLElement).dataset.filter || "all";
+            loadProjects();
+        });
+    });
+
+    function loadProjects() {
+        const userStr = localStorage.getItem("ciber_user");
+        const user = userStr ? JSON.parse(userStr) : { id: "unknown" };
+        const allProjects = JSON.parse(
+            localStorage.getItem("ciber_projects") || "[]",
+        );
+
+        // Filter by user AND type
+        let projects = allProjects.filter((p: any) => p.ownerId === user.id);
+
+        if (currentFilter !== "all") {
+            projects = projects.filter((p: any) => p.type === currentFilter);
+        }
+
+        if (projectsGrid) {
+            projectsGrid.innerHTML = projects
+                .map(
+                    (p: any) => `
+                <div class="db-project-card">
+                    <div class="db-project-img" style="background-image: url('${p.imageUrl || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b"}')"></div>
+                    <div class="db-project-info">
+                        <div class="db-card-header">
+                            <h3>${p.name}</h3>
+                        </div>
+                        <span class="db-badge ${p.type === "Profesional" ? "pro" : "academic"}">${p.type}</span>
+                        <p>${p.description}</p>
+                        <div class="db-techs">
+                            ${p.techs.map((t: string) => `<span>${t}</span>`).join("")}
+                        </div>
+                        <div class="db-actions">
+                            <button class="action-btn primary" onclick="window.editProject(${p.id})">EDITAR</button>
+                            <button class="action-btn icon delete" onclick="window.deleteProject(${p.id})">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `,
+                )
+                .join("");
+
+            if (projects.length === 0) {
+                const emptyMsg =
+                    currentFilter === "all"
+                        ? "No hay proyectos registrados. ¡Crea el primero!"
+                        : `No hay proyectos de tipo "${currentFilter}".`;
+
+                projectsGrid.innerHTML = `<p class="no-data">${emptyMsg}</p>`;
+            }
+        }
+    }
+
+    // Expose functions to window
+    (window as any).deleteProject = (id: number) => {
+        if (confirm("¿Seguro que quieres eliminar este proyecto?")) {
+            const allProjects = JSON.parse(
+                localStorage.getItem("ciber_projects") || "[]",
+            );
+            const newProjects = allProjects.filter((p: any) => p.id !== id);
+            localStorage.setItem("ciber_projects", JSON.stringify(newProjects));
+            loadProjects();
+        }
+    };
+
+    (window as any).editProject = (id: number) => {
+        const allProjects = JSON.parse(
+            localStorage.getItem("ciber_projects") || "[]",
+        );
+        const project = allProjects.find((p: any) => p.id === id);
+
+        if (project && projectForm) {
+            isEditing = true;
+            currentEditId = id;
+
+            // Populate form
+            const form = projectForm as HTMLFormElement;
+            (form.elements.namedItem("name") as HTMLInputElement).value =
+                project.name;
+            (form.elements.namedItem("type") as HTMLSelectElement).value =
+                project.type;
+            (form.elements.namedItem("role") as HTMLSelectElement).value =
+                project.role;
+            (
+                form.elements.namedItem("description") as HTMLTextAreaElement
+            ).value = project.description;
+            (form.elements.namedItem("techs") as HTMLInputElement).value =
+                project.techs.join(", ");
+            (form.elements.namedItem("repoUrl") as HTMLInputElement).value =
+                project.repoUrl;
+            (form.elements.namedItem("deployUrl") as HTMLInputElement).value =
+                project.deployUrl;
+            (form.elements.namedItem("imageUrl") as HTMLInputElement).value =
+                project.imageUrl;
+
+            openModal(true);
+        }
+    };
+
+    // Requests Logic
+    (window as any).updateRequestStatus = (
+        id: string,
+        status: "accepted" | "rejected",
+    ) => {
+        const requests = JSON.parse(
+            localStorage.getItem("ciber_requests") || "[]",
+        );
+        const index = requests.findIndex((r: any) => r.id === id.toString()); // Ensure string comparison
+
+        if (index !== -1) {
+            requests[index].status = status;
+            localStorage.setItem("ciber_requests", JSON.stringify(requests));
+            loadRequests(); // Refresh table
+            alert(
+                `Solicitud ${status === "accepted" ? "ACEPTADA" : "RECHAZADA"} correctamente.`,
+            );
+        }
+    };
+
+    function loadRequests() {
+        const requestsBody = document.getElementById("requests-body");
+        const requests = JSON.parse(
+            localStorage.getItem("ciber_requests") || "[]",
+        );
+
+        if (requestsBody) {
+            requestsBody.innerHTML = requests
+                .sort(
+                    (a: any, b: any) =>
+                        new Date(b.timestamp).getTime() -
+                        new Date(a.timestamp).getTime(),
+                )
+                .map(
+                    (r: any) => `
+                <tr>
+                    <td>${new Date(r.timestamp).toLocaleDateString()}</td>
+                    <td>${r.userName}</td>
+                    <td>${r.userEmail}</td>
+                    <td>${r.notes || "-"}</td>
+                    <td><span class="status ${r.status}">${r.status === "pending" ? "PENDIENTE" : r.status === "accepted" ? "ACEPTADO" : "RECHAZADO"}</span></td>
+                    <td>
+                        ${
+                            r.status === "pending"
+                                ? `
+                            <div class="actions-row" style="display:flex; gap:0.5rem;">
+                                <button class="action-btn" style="background:var(--neon-green); color:black; font-size:0.7rem; padding:0.4rem 0.8rem;" onclick="window.updateRequestStatus('${r.id}', 'accepted')">ACEPTAR</button>
+                                <button class="action-btn" style="background:#ff3333; color:white; font-size:0.7rem; padding:0.4rem 0.8rem;" onclick="window.updateRequestStatus('${r.id}', 'rejected')">RECHAZAR</button>
+                            </div>
+                        `
+                                : `
+                            <span style="color:var(--text-dim); font-size:0.8rem;">Procesado</span>
+                        `
+                        }
+                    </td>
+                </tr>
+            `,
+                )
+                .join("");
+
+            if (requests.length === 0) {
+                requestsBody.innerHTML =
+                    '<tr><td colspan="6" class="no-data">No hay solicitudes pendientes.</td></tr>';
+            }
+        }
+    }
+
+    loadProjects();
+    loadRequests();
+
+    // Profile Logic
+    const profileForm = document.getElementById("profile-form");
+
+    function loadProfile() {
+        const userStr = localStorage.getItem("ciber_user");
+        if (!userStr) return;
+
+        const user = JSON.parse(userStr);
+        const profileData = JSON.parse(
+            localStorage.getItem("ciber_programmer_profile") || "{}",
+        );
+
+        // Load saved profile data or defaults
+        const profile = profileData[user.id] || {
+            role: "",
+            bio: "",
+            skills: [],
+            social: {
+                github: "",
+                linkedin: "",
+                instagram: "",
+                whatsapp: "",
+            },
+        };
+
+        // Populate form
+        const roleInput = document.getElementById(
+            "profile-role",
+        ) as HTMLInputElement;
+        const bioInput = document.getElementById(
+            "profile-bio",
+        ) as HTMLTextAreaElement;
+        const skillsInput = document.getElementById(
+            "profile-skills",
+        ) as HTMLInputElement;
+        const githubInput = document.getElementById(
+            "profile-github",
+        ) as HTMLInputElement;
+        const linkedinInput = document.getElementById(
+            "profile-linkedin",
+        ) as HTMLInputElement;
+        const instagramInput = document.getElementById(
+            "profile-instagram",
+        ) as HTMLInputElement;
+        const whatsappInput = document.getElementById(
+            "profile-whatsapp",
+        ) as HTMLInputElement;
+
+        if (roleInput) roleInput.value = profile.role || "";
+        if (bioInput) bioInput.value = profile.bio || "";
+        if (skillsInput)
+            skillsInput.value = Array.isArray(profile.skills)
+                ? profile.skills.join(", ")
+                : "";
+        if (githubInput) githubInput.value = profile.social?.github || "";
+        if (linkedinInput) linkedinInput.value = profile.social?.linkedin || "";
+        if (instagramInput)
+            instagramInput.value = profile.social?.instagram || "";
+        if (whatsappInput) whatsappInput.value = profile.social?.whatsapp || "";
+    }
+
+    loadProfile();
+
+    if (profileForm) {
+        profileForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const userStr = localStorage.getItem("ciber_user");
+            if (!userStr) return;
+
+            const user = JSON.parse(userStr);
+            const formData = new FormData(profileForm as HTMLFormElement);
+
+            // Parse skills
+            const skillsString = formData.get("skills") as string;
+            const skills = skillsString
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
+
+            // Build profile object
+            const profileUpdate = {
+                role: formData.get("role"),
+                bio: formData.get("bio"),
+                skills: skills,
+                social: {
+                    github: formData.get("github") || "",
+                    linkedin: formData.get("linkedin") || "",
+                    instagram: formData.get("instagram") || "",
+                    whatsapp: formData.get("whatsapp") || "",
+                },
+            };
+
+            // Save to localStorage
+            const allProfiles = JSON.parse(
+                localStorage.getItem("ciber_programmer_profile") || "{}",
+            );
+            allProfiles[user.id] = profileUpdate;
+            localStorage.setItem(
+                "ciber_programmer_profile",
+                JSON.stringify(allProfiles),
+            );
+
+            // Show success message
+            const successMsg = document.getElementById("profile-success");
+            if (successMsg) {
+                successMsg.classList.remove("hidden");
+                setTimeout(() => {
+                    successMsg.classList.add("hidden");
+                }, 3000);
+            }
+        });
+    }
+
+    if (projectForm) {
+        projectForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const formData = new FormData(projectForm as HTMLFormElement);
+            const userStr = localStorage.getItem("ciber_user");
+            const user = userStr ? JSON.parse(userStr) : { id: "unknown" };
+
+            const techsString = formData.get("techs") as string;
+            const techs = techsString.split(",").map((t) => t.trim());
+
+            if (isEditing && currentEditId) {
+                // Update Existing
+                const allProjects = JSON.parse(
+                    localStorage.getItem("ciber_projects") || "[]",
+                );
+                const index = allProjects.findIndex(
+                    (p: any) => p.id === currentEditId,
+                );
+
+                if (index !== -1) {
+                    allProjects[index] = {
+                        ...allProjects[index],
+                        name: formData.get("name"),
+                        type: formData.get("type"),
+                        role: formData.get("role"),
+                        description: formData.get("description"),
+                        techs: techs,
+                        repoUrl: formData.get("repoUrl"),
+                        deployUrl: formData.get("deployUrl"),
+                        imageUrl: formData.get("imageUrl"),
+                    };
+                    localStorage.setItem(
+                        "ciber_projects",
+                        JSON.stringify(allProjects),
+                    );
+                }
+            } else {
+                // Create New
+                const newProject = {
+                    id: Date.now(),
+                    ownerId: user.id || "alex-panther",
+                    name: formData.get("name"),
+                    type: formData.get("type"),
+                    role: formData.get("role"),
+                    description: formData.get("description"),
+                    techs: techs,
+                    repoUrl: formData.get("repoUrl"),
+                    deployUrl: formData.get("deployUrl"),
+                    imageUrl: formData.get("imageUrl"),
+                };
+
+                const projects = JSON.parse(
+                    localStorage.getItem("ciber_projects") || "[]",
+                );
+                projects.push(newProject);
+                localStorage.setItem(
+                    "ciber_projects",
+                    JSON.stringify(projects),
+                );
+            }
+
+            loadProjects();
+            closeModal();
+            (projectForm as HTMLFormElement).reset();
+        });
+    }
+</script>
+
+<style>
+    /* ... (Keeping previous container styles but fixing specific components) ... */
+    .dashboard-container {
+        padding: 6rem 2rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 3rem;
+        color: var(--text-main);
+        letter-spacing: 4px;
+        text-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+    }
+
+    .subtitle {
+        color: var(--cyber-purple);
+        letter-spacing: 2px;
+        font-size: 1.2rem;
+    }
+
+    .dashboard-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--text-dim);
+        color: var(--text-dim);
+        padding: 0.8rem 2rem;
+        font-family: var(--font-heading);
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 1rem;
+        letter-spacing: 1px;
+    }
+
+    .tab-btn.active {
+        border-color: var(--neon-green);
+        color: var(--neon-green);
+        background: rgba(57, 255, 20, 0.1);
+        box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+    }
+
+    .view-section {
+        background: rgba(10, 15, 12, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        padding: 2.5rem;
+        border-radius: 12px;
+        min-height: 400px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .view-section.hidden {
+        display: none;
+    }
+
+    .view-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+        padding: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .filter-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-dim);
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        font-family: "Rajdhani", sans-serif;
+        font-weight: bold;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        border-radius: 2px;
+    }
+
+    .filter-btn:hover {
+        color: white;
+    }
+
+    .filter-btn.active {
+        background: var(--neon-green);
+        color: black;
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+    }
+
+    .view-header h2 {
+        color: var(--text-main);
+        margin: 0;
+    }
+
+    /* Cyber Button Styles */
+    .cyber-button {
+        background: var(--neon-green);
+        color: #000;
+        border: none;
+        padding: 0.8rem 2rem;
+        font-family: var(--font-heading);
+        font-weight: bold;
+        letter-spacing: 1px;
+        cursor: pointer;
+        clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+        transition: all 0.3s;
+        text-transform: uppercase;
+    }
+
+    .cyber-button:hover {
+        background: #fff;
+        box-shadow: 0 0 15px var(--neon-green);
+        transform: translateY(-2px);
+    }
+
+    .cyber-button.small {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .cyber-button.outline {
+        background: transparent;
+        border: 1px solid var(--neon-green);
+        color: var(--neon-green);
+        clip-path: none;
+        border-radius: 4px;
+    }
+
+    .cyber-button.outline:hover {
+        background: var(--neon-green);
+        color: black;
+    }
+
+    /* Profile Form Styles */
+    .profile-form {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .form-section {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(57, 255, 20, 0.2);
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .form-section h3 {
+        color: var(--neon-green);
+        font-family: var(--font-heading);
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        letter-spacing: 2px;
+    }
+
+    .form-section .icon {
+        font-size: 1.5rem;
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .input-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+        display: block;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+        font-family: var(--font-heading);
+    }
+
+    .input-group input,
+    .input-group textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+        font-family: var(--font-body);
+        font-size: 1rem;
+        padding: 0.8rem;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus {
+        border-color: var(--neon-green);
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+        outline: none;
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 0.5rem;
+        color: var(--text-dim);
+        font-size: 0.8rem;
+        opacity: 0.7;
+    }
+
+    .form-actions {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .success-message {
+        color: var(--neon-green);
+        font-family: var(--font-heading);
+        font-size: 1rem;
+        padding: 0.8rem 1.5rem;
+        background: rgba(57, 255, 20, 0.1);
+        border: 1px solid var(--neon-green);
+        border-radius: 4px;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .success-message.hidden {
+        display: none;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .row {
+            grid-template-columns: 1fr;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<style is:global>
+    /* Projects Grid (Global for Dynamic JS) */
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+    }
+
+    .db-project-card {
+        background: rgba(
+            10,
+            15,
+            12,
+            0.6
+        ); /* Translucent dark aligned with theme */
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px; /* Less rounded, more tech */
+        overflow: hidden;
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .db-project-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #39ff14, transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .db-project-card:hover {
+        transform: translateY(-5px);
+        border-color: #39ff14; /* Neon Green */
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+    }
+
+    .db-project-card:hover::before {
+        opacity: 1;
+    }
+
+    .db-project-img {
+        height: 180px;
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        filter: grayscale(40%);
+        transition: filter 0.3s;
+    }
+
+    .db-project-card:hover .db-project-img {
+        filter: grayscale(0%);
+    }
+
+    .db-project-info {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        color: #e0e0e0;
+    }
+
+    .db-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .db-project-info h3 {
+        color: #ffffff;
+        font-family: "Orbitron", sans-serif;
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+        margin: 0;
+        text-transform: uppercase;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+
+    .db-badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+        border: 1px solid;
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+        width: fit-content;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        clip-path: polygon(10% 0, 100% 0, 100% 80%, 90% 100%, 0 100%, 0 20%);
+    }
+
+    .db-badge.pro {
+        border-color: #bc13fe; /* Cyber Purple */
+        color: #bc13fe;
+        background: rgba(188, 19, 254, 0.1);
+        box-shadow: 0 0 5px rgba(188, 19, 254, 0.2);
+    }
+    .db-badge.academic {
+        border-color: #00f3ff; /* Electric Blue */
+        color: #00f3ff;
+        background: rgba(0, 243, 255, 0.1);
+        box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+    }
+
+    .db-project-info p {
+        color: #a0a0a0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-top: 0;
+        max-height: 4.5em;
+    }
+
+    .db-techs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .db-techs span {
+        font-size: 0.7rem;
+        color: #39ff14; /* Neon Green Text */
+        border: 1px solid rgba(57, 255, 20, 0.3);
+        background: rgba(5, 10, 8, 0.8);
+        padding: 0.2rem 0.6rem;
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+    }
+
+    .db-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: auto;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 1rem;
+    }
+
+    /* Action Buttons (Restyled to Match Main Button) */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.6rem 1rem;
+        font-weight: 700;
+        transition: all 0.3s;
+        cursor: pointer;
+        border: none;
+        font-family: "Orbitron", sans-serif;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+    }
+
+    .action-btn.primary {
+        background: #39ff14; /* Neon Green */
+        color: #050a08; /* Dark Text */
+        flex: 1;
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+    }
+
+    .action-btn.primary:hover {
+        background: #fff;
+        color: #39ff14;
+        box-shadow: 0 0 20px #39ff14;
+        transform: translateY(-2px);
+    }
+
+    .action-btn.icon {
+        background: transparent;
+        border: 1px solid #ff4444;
+        color: #ff4444;
+        width: 42px;
+        padding: 0;
+        clip-path: none; /* Icons can stay square/box */
+        border-radius: 4px;
+    }
+
+    .action-btn.icon:hover {
+        background: #ff4444;
+        color: white;
+        box-shadow: 0 0 10px #ff4444;
+    }
+
+    .action-btn.delete:hover {
+        background: #ef4444;
+    }
+</style>
+
+<style>
+    /* Modal Form Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 3000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .modal-overlay.hidden {
+        display: none;
+    }
+
+    .modal-content {
+        background: #0d1210;
+        border: 1px solid var(--neon-green);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 600px;
+        position: relative;
+        box-shadow: 0 0 50px rgba(57, 255, 20, 0.1);
+    }
+
+    .modal-content h2 {
+        color: var(--neon-green);
+        margin-bottom: 2rem;
+        text-align: center;
+        font-size: 1.8rem;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        font-size: 2rem;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .close-btn:hover {
+        color: white;
+    }
+
+    .input-group label {
+        display: block;
+        color: var(--neon-green);
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: 1px;
+    }
+
+    .input-group input,
+    .input-group textarea,
+    .input-group select {
+        width: 100%;
+        padding: 0.8rem;
+        background: #151a18; /* Dark background ensured */
+        border: 1px solid #333;
+        color: white;
+        font-family: var(--font-body);
+        font-size: 1rem;
+        border-radius: 4px;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus,
+    .input-group select:focus {
+        border-color: var(--neon-green);
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .no-data {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+        border: 2px dashed var(--glass-border);
+        border-radius: 8px;
+        color: var(--text-dim);
+    }
+
+    /* Table Fixes */
+    .cyber-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--text-main);
+        font-family: "Rajdhani", sans-serif;
+    }
+
+    .cyber-table th,
+    .cyber-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cyber-table th {
+        color: var(--neon-green);
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        border-bottom: 2px solid var(--neon-green);
+    }
+
+    .cyber-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .status.pending {
+        background: rgba(255, 255, 0, 0.1);
+        color: #facc15;
+        border: 1px solid rgba(255, 255, 0, 0.3);
+    }
+
+    .status.accepted {
+        background: rgba(57, 255, 20, 0.1);
+        color: var(--neon-green);
+        border: 1px solid rgba(57, 255, 20, 0.3);
+    }
+
+    .status.rejected {
+        background: rgba(255, 0, 0, 0.1);
+        color: #ff4444;
+        border: 1px solid rgba(255, 0, 0, 0.3);
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 6rem 1rem 1rem;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2rem;
+        }
+
+        .dashboard-tabs {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tab-btn {
+            width: 100%;
+        }
+
+        .view-section {
+            padding: 1.5rem;
+        }
+
+        .header-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .projects-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .row {
+            grid-template-columns: 1fr;
+        }
+
+        .requests-table-container {
+            margin: 0 -1.5rem;
+            padding: 0 1.5rem;
+            overflow-x: auto;
+        }
+
+        .cyber-table th,
+        .cyber-table td {
+            white-space: nowrap;
+            padding: 0.8rem;
+        }
+
+        .modal-content {
+            width: 95%;
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+    }
+</style>

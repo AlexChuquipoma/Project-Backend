@@ -27,9 +27,20 @@
 
 <script>
     const advisoryBtn = document.getElementById("advisory-btn");
+    const userStr = localStorage.getItem("ciber_user");
+
+    if (userStr) {
+        const user = JSON.parse(userStr);
+        if (
+            (user.role === "programmer" || user.role === "admin") &&
+            advisoryBtn
+        ) {
+            advisoryBtn.style.display = "none";
+        }
+    }
+
     if (advisoryBtn) {
         advisoryBtn.addEventListener("click", () => {
-            const userStr = localStorage.getItem("ciber_user");
             if (userStr) {
                 // User is logged in, open modal
                 if ((window as any).openAdvisoryModal) {
@@ -282,5 +293,28 @@
         color: var(--text-dim);
         font-size: 1.1rem;
         line-height: 1.8;
+    }
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+        }
+
+        .cta-button {
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            width: 100%;
+            text-align: center;
+        }
+
+        .cta-group {
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+        }
     }
 </style>

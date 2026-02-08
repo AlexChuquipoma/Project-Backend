@@ -12,7 +12,7 @@
             <li><a href="/#programmers">EQUIPOS</a></li>
             <li><a href="/#projects">PROYECTOS</a></li>
             <li id="auth-item">
-                <a href="/login" class="login-btn">INICIAR SESIÓN</a>
+                <a href="/auth/login" class="login-btn">INICIAR SESIÓN</a>
             </li>
         </ul>
         <div class="hamburger">
@@ -107,19 +107,33 @@
 
     @media (max-width: 768px) {
         .nav-links {
-            display: none; /* Mobile menu implementation could be added later */
-            position: absolute;
-            top: 100%;
+            display: none;
+            position: fixed; /* Fixed to cover screen */
+            top: 70px; /* Below navbar */
             left: 0;
             width: 100%;
-            background: var(--deep-jungle);
+            height: calc(100vh - 70px);
+            background: rgba(5, 10, 8, 0.95);
+            backdrop-filter: blur(20px);
             flex-direction: column;
             padding: 2rem;
-            border-bottom: 1px solid var(--glass-border);
+            border-bottom: none;
+            justify-content: flex-start;
+            gap: 2.5rem;
+            align-items: center;
         }
 
         .nav-links.active {
             display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .nav-links a {
+            font-size: 1.5rem; /* Larger text for mobile */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+            text-align: center;
+            padding-bottom: 1rem;
         }
 
         .hamburger {
@@ -209,6 +223,28 @@
         flex-direction: column;
         gap: 0.8rem;
         z-index: 2000;
+    }
+
+    .notification-dot {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        background: #ff3333;
+        border-radius: 50%;
+        border: 2px solid #050a08;
+        box-shadow: 0 0 5px #ff3333;
+    }
+
+    .badge-mini {
+        background: #ff3333;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0 0.4rem;
+        border-radius: 999px;
+        margin-left: auto;
+        font-family: var(--font-heading);
     }
 
     .dropdown-menu::before {
@@ -346,18 +382,45 @@
         const userStr = localStorage.getItem("ciber_user");
         if (userStr && authItem) {
             const user = JSON.parse(userStr);
-            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=39ff14&color=050a08&bold=true`;
+            const avatarUrl =
+                user.image ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=39ff14&color=050a08&bold=true`;
 
             // User is logged in
-            const dashboardLink =
-                user.role === "programmer"
-                    ? `<a href="/dashboard" class="dropdown-item"><span class="icon">📊</span> Dashboard</a>`
-                    : "";
+            // User is logged in
+            let dashboardLink = "";
+            if (user.role === "programmer") {
+                dashboardLink = `<a href="/programmer/dashboard" class="dropdown-item"><span class="icon">📊</span> Dashboard</a>`;
+            } else if (user.role === "admin") {
+                dashboardLink = `<a href="/admin/dashboard" class="dropdown-item" style="color:var(--cyber-purple)"><span class="icon">🛡️</span> Admin Panel</a>`;
+            }
+
+            // Notification Logic
+            const savedRequests = JSON.parse(
+                localStorage.getItem("ciber_requests") || "[]",
+            );
+            const myRequests = savedRequests.filter(
+                (r: any) => r.userEmail === user.email,
+            );
+            const hasUpdates = myRequests.some(
+                (r: any) => r.status === "accepted" || r.status === "rejected",
+            );
+            const notificationDot = hasUpdates
+                ? `<span class="notification-dot"></span>`
+                : "";
+
+            const requestsLink = `<a href="/programmer/requests" class="dropdown-item">
+                <span class="icon">📨</span> Mis Solicitudes 
+                ${hasUpdates ? '<span class="badge-mini">!</span>' : ""}
+            </a>`;
 
             authItem.innerHTML = `
                 <div class="profile-dropdown">
                     <div class="profile-trigger" id="profile-trigger">
-                        <img src="${avatarUrl}" alt="Perfil" class="profile-avatar">
+                        <div style="position:relative;">
+                            <img src="${avatarUrl}" alt="Perfil" class="profile-avatar">
+                            ${notificationDot}
+                        </div>
                         <span class="profile-arrow">▼</span>
                     </div>
                     <div class="dropdown-menu" id="dropdown-menu">
@@ -368,10 +431,13 @@
                                 <span class="header-email">${user.email}</span>
                             </div>
                         </div>
+                        <div class="dropdown-divider"></div>
                         ${dashboardLink}
-                        <a href="#" class="dropdown-item">
+                        ${requestsLink}
+                        <a href="/programmer/profile" class="dropdown-item box-link">
                             <span class="icon">👤</span> Mi Perfil
                         </a>
+                        <div class="dropdown-divider"></div>
                         <button id="logout-btn" class="dropdown-item danger">
                             <span class="icon">↪️</span> Cerrar Sesión
                         </button>

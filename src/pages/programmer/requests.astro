@@ -1,0 +1,211 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Mis Solicitudes | CiberPortfolio">
+    <div class="requests-container">
+        <header class="page-header">
+            <h1 class="glitch" data-text="MIS SOLICITUDES">MIS SOLICITUDES</h1>
+            <p class="subtitle">ESTADO DE TUS CONEXIONES</p>
+        </header>
+
+        <div class="glass-panel table-container">
+            <table class="cyber-table">
+                <thead>
+                    <tr>
+                        <th>FECHA</th>
+                        <th>PROGRAMADOR</th>
+                        <th>NOTA</th>
+                        <th>ESTADO</th>
+                    </tr>
+                </thead>
+                <tbody id="user-requests-body">
+                    <!-- Injected via JS -->
+                </tbody>
+            </table>
+            <div id="no-data-msg" class="no-data hidden">
+                No has realizado ninguna solicitud de enlace.
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="/" class="cyber-button small">VOLVER AL INICIO</a>
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .requests-container {
+        padding: 8rem 2rem 4rem;
+        max-width: 1000px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    h1 {
+        font-family: "Orbitron", sans-serif;
+        font-size: 3rem;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        color: var(--neon-green);
+        letter-spacing: 2px;
+        font-size: 1rem;
+    }
+
+    .glass-panel {
+        background: rgba(10, 15, 12, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .cyber-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--text-main);
+        font-family: "Rajdhani", sans-serif;
+    }
+
+    .cyber-table th,
+    .cyber-table td {
+        padding: 1.2rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cyber-table th {
+        color: var(--neon-green);
+        font-family: "Orbitron", sans-serif;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        border-bottom: 2px solid var(--neon-green);
+    }
+
+    .cyber-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .status.pending {
+        background: rgba(255, 255, 0, 0.1);
+        color: #facc15;
+        border: 1px solid rgba(255, 255, 0, 0.3);
+    }
+
+    .status.accepted {
+        background: rgba(57, 255, 20, 0.1);
+        color: var(--neon-green);
+        border: 1px solid rgba(57, 255, 20, 0.3);
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    }
+
+    .status.rejected {
+        background: rgba(255, 0, 0, 0.1);
+        color: #ff4444;
+        border: 1px solid rgba(255, 0, 0, 0.3);
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-dim);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .cyber-button.small {
+        display: inline-block;
+        padding: 0.8rem 2rem;
+        text-decoration: none;
+        background: transparent;
+        border: 1px solid var(--neon-green);
+        color: var(--neon-green);
+        font-family: "Orbitron", sans-serif;
+        transition: all 0.3s;
+    }
+
+    .cyber-button.small:hover {
+        background: var(--neon-green);
+        color: black;
+        box-shadow: 0 0 20px var(--neon-green);
+    }
+</style>
+
+<script>
+    const tableBody = document.getElementById("user-requests-body");
+    const noDataMsg = document.getElementById("no-data-msg");
+
+    function loadUserRequests() {
+        const userStr = localStorage.getItem("ciber_user");
+        if (!userStr) {
+            window.location.href = "/auth/login";
+            return;
+        }
+
+        const user = JSON.parse(userStr);
+        const allRequests = JSON.parse(
+            localStorage.getItem("ciber_requests") || "[]",
+        );
+
+        // Filter requests for this user
+        const myRequests = allRequests.filter(
+            (r: any) => r.userEmail === user.email,
+        );
+
+        if (myRequests.length === 0) {
+            if (noDataMsg) noDataMsg.classList.remove("hidden");
+            return;
+        }
+
+        if (tableBody) {
+            tableBody.innerHTML = myRequests
+                .sort(
+                    (a: any, b: any) =>
+                        new Date(b.timestamp).getTime() -
+                        new Date(a.timestamp).getTime(),
+                )
+                .map(
+                    (r: any) => `
+                    <tr>
+                        <td>${new Date(r.timestamp).toLocaleDateString()}</td>
+                        <td>${r.programmer}</td>
+                        <td>${r.notes || "-"}</td>
+                        <td>
+                            <span class="status ${r.status}">
+                                ${r.status === "pending" ? "PENDIENTE" : r.status === "accepted" ? "ACEPTADO" : "RECHAZADO"}
+                            </span>
+                        </td>
+                    </tr>
+                `,
+                )
+                .join("");
+        }
+    }
+
+    document.addEventListener("astro:page-load", loadUserRequests);
+    // Since Astro viewtransitions might not be on, run on DOMContentLoaded too
+    document.addEventListener("DOMContentLoaded", loadUserRequests);
+</script>
+
+

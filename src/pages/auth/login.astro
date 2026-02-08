@@ -1,5 +1,5 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from "../../layouts/Layout.astro";
 ---
 
 <Layout title="Iniciar Sesión | CiberPortfolio">
@@ -44,6 +44,10 @@ import Layout from "../layouts/Layout.astro";
             </form>
 
             <script>
+                import { login } from "../../lib/services/auth.service";
+                import { validateEmail } from "../../lib/utils/validators";
+                import type { LoginCredentials } from "../../types/user.types";
+
                 const loginForm = document.getElementById("login-form");
                 const emailInput = document.getElementById(
                     "email",
@@ -54,71 +58,74 @@ import Layout from "../layouts/Layout.astro";
                 const errorMessage = document.getElementById("login-error");
 
                 if (loginForm) {
-                    loginForm.addEventListener("submit", (e) => {
+                    loginForm.addEventListener("submit", async (e) => {
                         e.preventDefault();
 
-                        const email = emailInput?.value;
-                        const password = passwordInput?.value;
+                        const email = emailInput?.value || "";
+                        const password = passwordInput?.value || "";
 
-                        // Mock Credentials
-                        if (
-                            email === "login@gmail.com" &&
-                            password === "123456"
-                        ) {
-                            // Simulate User Login
-                            const user = {
-                                name: "Usuario Demo",
-                                email: email,
-                                role: "user",
-                                token: "mock-jwt-token-user",
-                            };
-                            localStorage.setItem(
-                                "ciber_user",
-                                JSON.stringify(user),
-                            );
-                            window.location.href = "/";
-                        } else if (
-                            email === "programador@gmail.com" &&
-                            password === "123456"
-                        ) {
-                            // Simulate Programmer Login
-                            const user = {
-                                name: "Alex 'Panther' Code", // Simulation: linking to one of the showcase programmers
-                                email: email,
-                                role: "programmer",
-                                token: "mock-jwt-token-programmer",
-                                id: "alex-panther", // ID for profile linking
-                            };
-                            localStorage.setItem(
-                                "ciber_user",
-                                JSON.stringify(user),
-                            );
-                            window.location.href = "/dashboard";
-                        } else {
-                            // Show Error
-                            if (errorMessage) {
-                                errorMessage.classList.remove("hidden");
-                                errorMessage.style.display = "block";
+                        // Validate inputs
+                        if (!validateEmail(email)) {
+                            showError("Por favor ingresa un correo válido");
+                            return;
+                        }
 
-                                // Shake animation
-                                const card = document.querySelector(
-                                    ".auth-card",
-                                ) as HTMLElement;
-                                if (card) {
-                                    card.style.animation = "none";
-                                    card.offsetHeight; /* trigger reflow */
-                                    card.style.animation = "shake 0.5s";
-                                }
+                        if (password.length < 6) {
+                            showError(
+                                "La contraseña debe tener al menos 6 caracteres",
+                            );
+                            return;
+                        }
+
+                        const credentials: LoginCredentials = {
+                            email,
+                            password,
+                        };
+
+                        try {
+                            const user = await login(credentials);
+
+                            // Redirect based on role
+                            if (user.role === "admin") {
+                                window.location.href = "/admin/dashboard";
+                            } else if (user.role === "programmer") {
+                                window.location.href = "/programmer/dashboard";
+                            } else {
+                                window.location.href = "/";
                             }
+                        } catch (error) {
+                            showError(
+                                error instanceof Error
+                                    ? error.message
+                                    : "Error al iniciar sesión",
+                            );
                         }
                     });
+                }
+
+                function showError(message: string) {
+                    if (errorMessage) {
+                        errorMessage.textContent = message;
+                        errorMessage.classList.remove("hidden");
+                        errorMessage.style.display = "block";
+
+                        // Shake animation
+                        const card = document.querySelector(
+                            ".auth-card",
+                        ) as HTMLElement;
+                        if (card) {
+                            card.style.animation = "none";
+                            card.offsetHeight; /* trigger reflow */
+                            card.style.animation = "shake 0.5s";
+                        }
+                    }
                 }
             </script>
 
             <div class="auth-links">
                 <p>
                     ¿No tienes credenciales? <a
-                        href="/register"
+                        href="/auth/register"
                         class="neon-link">Registrar Protocolo</a
                     >
                 </p>

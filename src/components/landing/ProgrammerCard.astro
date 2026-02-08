@@ -11,7 +11,7 @@ interface Props {
 const { id, name, role, image, skills, socials } = Astro.props;
 ---
 
-<a href={`/programmer?id=${id}`} class="programmer-card-link">
+<a href={`/programmer/${id}`} class="programmer-card-link">
     <div class="programmer-card">
         <div class="card-image">
             <img src={image} alt={name} />

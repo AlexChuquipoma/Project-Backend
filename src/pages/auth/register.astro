@@ -1,5 +1,5 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from "../../layouts/Layout.astro";
 ---
 
 <Layout title="Registro | CiberPortfolio">
@@ -63,10 +63,111 @@ import Layout from "../layouts/Layout.astro";
                 </button>
             </form>
 
+            <script>
+                import { register } from "../../lib/services/auth.service";
+                import { validateEmail } from "../../lib/utils/validators";
+                import type { RegisterData } from "../../types/user.types";
+
+                const form = document.querySelector(".auth-form");
+                const errorContainer = document.createElement("div");
+                errorContainer.className = "error-message hidden";
+                errorContainer.style.cssText =
+                    "color: #ff3333; font-size: 0.9rem; margin-bottom: 1rem; text-align: center;";
+
+                if (form) {
+                    form.insertBefore(
+                        errorContainer,
+                        form.querySelector("button"),
+                    );
+
+                    form.addEventListener("submit", async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(
+                            e.target as HTMLFormElement,
+                        );
+                        const name = formData.get("name") as string;
+                        const email = formData.get("email") as string;
+                        const password = formData.get("password") as string;
+                        const confirm = formData.get(
+                            "confirm-password",
+                        ) as string;
+
+                        // Clear previous errors
+                        errorContainer.textContent = "";
+                        errorContainer.classList.add("hidden");
+
+                        // Validate inputs
+                        if (!name || name.trim().length === 0) {
+                            showError("Por favor ingresa tu nombre");
+                            return;
+                        }
+
+                        if (!validateEmail(email)) {
+                            showError("Por favor ingresa un correo válido");
+                            return;
+                        }
+
+                        if (password.length < 6) {
+                            showError(
+                                "La contraseña debe tener al menos 6 caracteres",
+                            );
+                            return;
+                        }
+
+                        if (password !== confirm) {
+                            showError("Las contraseñas no coinciden");
+                            return;
+                        }
+
+                        const registerData: RegisterData = {
+                            name: name.trim(),
+                            email: email.trim(),
+                            password,
+                            role: "user", // Default role
+                        };
+
+                        try {
+                            const user = await register(registerData);
+
+                            // Redirect based on role
+                            if (user.role === "admin") {
+                                window.location.href = "/admin/dashboard";
+                            } else if (user.role === "programmer") {
+                                window.location.href = "/programmer/dashboard";
+                            } else {
+                                window.location.href = "/";
+                            }
+                        } catch (error) {
+                            showError(
+                                error instanceof Error
+                                    ? error.message
+                                    : "Error al registrar usuario",
+                            );
+                        }
+                    });
+                }
+
+                function showError(message: string) {
+                    errorContainer.textContent = message;
+                    errorContainer.classList.remove("hidden");
+
+                    // Shake animation
+                    const card = document.querySelector(
+                        ".auth-card",
+                    ) as HTMLElement;
+                    if (card) {
+                        card.style.animation = "none";
+                        card.offsetHeight; /* trigger reflow */
+                        card.style.animation = "shake 0.5s";
+                    }
+                }
+            </script>
+
             <div class="auth-links">
                 <p>
-                    ¿Ya tienes credenciales? <a href="/login" class="neon-link"
-                        >Iniciar Sesión</a
+                    ¿Ya tienes credenciales? <a
+                        href="/auth/login"
+                        class="neon-link">Iniciar Sesión</a
                     >
                 </p>
                 <a href="/" class="back-link">Volver al Nexus</a>
@@ -274,6 +375,24 @@ import Layout from "../layouts/Layout.astro";
     .back-link:hover {
         opacity: 1;
         color: var(--text-main);
+    }
+
+    @keyframes shake {
+        0% {
+            transform: translateX(0);
+        }
+        25% {
+            transform: translateX(-5px);
+        }
+        50% {
+            transform: translateX(5px);
+        }
+        75% {
+            transform: translateX(-5px);
+        }
+        100% {
+            transform: translateX(0);
+        }
     }
 
     @keyframes scan-top {

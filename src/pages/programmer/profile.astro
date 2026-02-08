@@ -1,0 +1,630 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Mi Perfil | CiberPortfolio">
+    <div class="profile-container">
+        <header class="page-header">
+            <h1 class="glitch" data-text="MI PERFIL">MI PERFIL</h1>
+            <p class="subtitle">GESTIÓN DE PERFIL PROFESIONAL</p>
+        </header>
+
+        <!-- Loading State -->
+        <div
+            id="loading"
+            class="glass-panel"
+            style="text-align: center; padding: 3rem;"
+        >
+            <p style="color: var(--neon-green);">Cargando perfil...</p>
+        </div>
+
+        <!-- Profile Form -->
+        <div
+            id="profile-content"
+            class="glass-panel profile-card"
+            style="display: none;"
+        >
+            <form id="profile-form" class="profile-form">
+                <!-- User Info (Read-only) -->
+                <div class="section-header">
+                    <h2>INFORMACIÓN DE USUARIO</h2>
+                </div>
+
+                <div class="row">
+                    <div class="input-group">
+                        <label for="name">NOMBRE</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            readonly
+                            class="readonly-input"
+                        />
+                    </div>
+                    <div class="input-group">
+                        <label for="email">EMAIL</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            readonly
+                            class="readonly-input"
+                        />
+                    </div>
+                </div>
+
+                <!-- Professional Info -->
+                <div class="section-header">
+                    <h2>INFORMACIÓN PROFESIONAL</h2>
+                </div>
+
+                <div class="input-group">
+                    <label for="jobTitle">TÍTULO PROFESIONAL</label>
+                    <input
+                        type="text"
+                        id="jobTitle"
+                        name="jobTitle"
+                        placeholder="ej: Full Stack Developer"
+                    />
+                </div>
+
+                <div class="input-group">
+                    <label for="yearsExperience">AÑOS DE EXPERIENCIA</label>
+                    <input
+                        type="number"
+                        id="yearsExperience"
+                        name="yearsExperience"
+                        min="0"
+                        placeholder="0"
+                    />
+                </div>
+
+                <div class="input-group">
+                    <label for="bio">BIOGRAFÍA</label>
+                    <textarea
+                        id="bio"
+                        name="bio"
+                        rows="4"
+                        placeholder="Cuéntanos sobre ti, tu experiencia y especialización..."
+                    ></textarea>
+                </div>
+
+                <!-- Skills -->
+                <div class="section-header">
+                    <h2>HABILIDADES</h2>
+                </div>
+
+                <div class="input-group">
+                    <label for="skillInput">AGREGAR HABILIDAD</label>
+                    <div class="skill-input-wrapper">
+                        <input
+                            type="text"
+                            id="skillInput"
+                            placeholder="ej: Java, TypeScript, Docker..."
+                        />
+                        <button type="button" id="addSkillBtn" class="add-btn"
+                            >+</button
+                        >
+                    </div>
+                    <div id="skillsList" class="skills-list"></div>
+                </div>
+
+                <!-- Social Links -->
+                <div class="section-header">
+                    <h2>REDES SOCIALES</h2>
+                </div>
+
+                <div class="row">
+                    <div class="input-group">
+                        <label for="githubUrl">GITHUB</label>
+                        <input
+                            type="url"
+                            id="githubUrl"
+                            name="githubUrl"
+                            placeholder="https://github.com/usuario"
+                        />
+                    </div>
+                    <div class="input-group">
+                        <label for="linkedinUrl">LINKEDIN</label>
+                        <input
+                            type="url"
+                            id="linkedinUrl"
+                            name="linkedinUrl"
+                            placeholder="https://linkedin.com/in/usuario"
+                        />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-group">
+                        <label for="instagramUrl">INSTAGRAM</label>
+                        <input
+                            type="url"
+                            id="instagramUrl"
+                            name="instagramUrl"
+                            placeholder="https://instagram.com/usuario"
+                        />
+                    </div>
+                    <div class="input-group">
+                        <label for="whatsappUrl">WHATSAPP</label>
+                        <input
+                            type="url"
+                            id="whatsappUrl"
+                            name="whatsappUrl"
+                            placeholder="https://wa.me/123456789"
+                        />
+                    </div>
+                </div>
+
+                <!-- Metadata -->
+                <div class="account-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">PERFIL CREADO:</span>
+                        <span id="created-at" class="meta-value">-</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">ÚLTIMA ACTUALIZACIÓN:</span>
+                        <span id="updated-at" class="meta-value">-</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="cyber-button"
+                    >GUARDAR CAMBIOS</button
+                >
+            </form>
+        </div>
+
+        <!-- Error State -->
+        <div
+            id="error-message"
+            class="glass-panel"
+            style="display: none; text-align: center; padding: 2rem;"
+        >
+            <p id="error-text" style="color: #ff4444;"></p>
+            <button
+                id="create-profile-btn"
+                class="cyber-button"
+                style="margin-top: 1rem;">CREAR PERFIL</button
+            >
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="/programmer/dashboard" class="cyber-button small"
+                >VOLVER AL DASHBOARD</a
+            >
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .profile-container {
+        padding: 8rem 2rem 4rem;
+        max-width: 900px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    h1 {
+        font-family: "Orbitron", sans-serif;
+        font-size: 3rem;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        color: var(--neon-green);
+        letter-spacing: 2px;
+        font-size: 1rem;
+    }
+
+    .glass-panel {
+        background: rgba(10, 15, 12, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 3rem;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .section-header {
+        margin: 2rem 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--neon-green);
+    }
+
+    .section-header h2 {
+        font-family: "Orbitron", sans-serif;
+        font-size: 1.2rem;
+        color: var(--neon-green);
+        letter-spacing: 2px;
+    }
+
+    .profile-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .input-group label {
+        color: var(--neon-green);
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: 1px;
+    }
+
+    .input-group input,
+    .input-group textarea {
+        width: 100%;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        font-family: var(--font-body);
+        font-size: 1rem;
+        border-radius: 4px;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus {
+        border-color: var(--neon-green);
+    }
+
+    .readonly-input {
+        background: rgba(0, 0, 0, 0.3) !important;
+        color: #aaa !important;
+        border-color: transparent !important;
+        cursor: not-allowed;
+    }
+
+    .skill-input-wrapper {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .add-btn {
+        padding: 0.5rem 1.5rem;
+        background: var(--neon-green);
+        color: black;
+        border: none;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+
+    .add-btn:hover {
+        box-shadow: 0 0 20px var(--neon-green);
+    }
+
+    .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .skill-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(57, 255, 20, 0.1);
+        border: 1px solid var(--neon-green);
+        color: var(--neon-green);
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .skill-tag button {
+        background: none;
+        border: none;
+        color: #ff4444;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .account-meta {
+        margin-top: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+    }
+
+    .meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .meta-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .meta-value {
+        color: var(--text-main);
+        font-family: "Rajdhani", sans-serif;
+    }
+
+    .cyber-button {
+        background: var(--neon-green);
+        color: #050a08;
+        border: none;
+        padding: 1rem 2rem;
+        font-family: "Orbitron", sans-serif;
+        font-weight: bold;
+        font-size: 1rem;
+        letter-spacing: 1px;
+        cursor: pointer;
+        clip-path: polygon(5% 0, 100% 0, 100% 70%, 95% 100%, 0 100%, 0 30%);
+        transition: all 0.3s;
+        margin-top: 1rem;
+    }
+
+    .cyber-button:hover {
+        box-shadow: 0 0 20px var(--neon-green);
+        color: white;
+        background: black;
+        border: 1px solid var(--neon-green);
+    }
+
+    .cyber-button.small {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        text-decoration: none;
+        background: transparent;
+        border: 1px solid var(--neon-green);
+        color: var(--neon-green);
+        font-family: "Orbitron", sans-serif;
+    }
+
+    .cyber-button.small:hover {
+        background: var(--neon-green);
+        color: black;
+    }
+
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 6rem 1rem 2rem;
+        }
+
+        .row {
+            grid-template-columns: 1fr;
+        }
+
+        .glass-panel {
+            padding: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+
+<script>
+    import {
+        getMyProfile,
+        createOrUpdateProfile,
+        type ProgrammerProfile,
+    } from "../../lib/services/profileService";
+
+    const loading = document.getElementById("loading");
+    const profileContent = document.getElementById("profile-content");
+    const errorMessage = document.getElementById("error-message");
+    const errorText = document.getElementById("error-text");
+    const createProfileBtn = document.getElementById("create-profile-btn");
+
+    const form = document.getElementById("profile-form") as HTMLFormElement;
+    const nameInput = document.getElementById("name") as HTMLInputElement;
+    const emailInput = document.getElementById("email") as HTMLInputElement;
+    const jobTitleInput = document.getElementById(
+        "jobTitle",
+    ) as HTMLInputElement;
+    const yearsExpInput = document.getElementById(
+        "yearsExperience",
+    ) as HTMLInputElement;
+    const bioInput = document.getElementById("bio") as HTMLTextAreaElement;
+    const githubInput = document.getElementById(
+        "githubUrl",
+    ) as HTMLInputElement;
+    const linkedinInput = document.getElementById(
+        "linkedinUrl",
+    ) as HTMLInputElement;
+    const instagramInput = document.getElementById(
+        "instagramUrl",
+    ) as HTMLInputElement;
+    const whatsappInput = document.getElementById(
+        "whatsappUrl",
+    ) as HTMLInputElement;
+    const createdAtEl = document.getElementById("created-at");
+    const updatedAtEl = document.getElementById("updated-at");
+
+    // Skills management
+    const skillInput = document.getElementById(
+        "skillInput",
+    ) as HTMLInputElement;
+    const addSkillBtn = document.getElementById("addSkillBtn");
+    const skillsList = document.getElementById("skillsList");
+    let skills: string[] = [];
+
+    function addSkill(skill: string) {
+        const trimmed = skill.trim();
+        if (trimmed && !skills.includes(trimmed)) {
+            skills.push(trimmed);
+            renderSkills();
+            skillInput.value = "";
+        }
+    }
+
+    function removeSkill(skill: string) {
+        skills = skills.filter((s) => s !== skill);
+        renderSkills();
+    }
+
+    function renderSkills() {
+        if (!skillsList) return;
+        skillsList.innerHTML = skills
+            .map(
+                (skill) => `
+            <div class="skill-tag">
+                <span>${skill}</span>
+                <button type="button" onclick="window.removeSkill('${skill}')">×</button>
+            </div>
+        `,
+            )
+            .join("");
+    }
+
+    // Expose removeSkill to global scope for onclick
+    (window as any).removeSkill = removeSkill;
+
+    if (addSkillBtn) {
+        addSkillBtn.addEventListener("click", () => {
+            addSkill(skillInput.value);
+        });
+    }
+
+    if (skillInput) {
+        skillInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                addSkill(skillInput.value);
+            }
+        });
+    }
+
+    async function loadProfile() {
+        try {
+            if (loading) loading.style.display = "block";
+            if (profileContent) profileContent.style.display = "none";
+            if (errorMessage) errorMessage.style.display = "none";
+
+            const profile = await getMyProfile();
+
+            // Fill form with profile data
+            if (nameInput) nameInput.value = profile.userName || "";
+            if (emailInput) emailInput.value = profile.userEmail || "";
+            if (jobTitleInput) jobTitleInput.value = profile.jobTitle || "";
+            if (yearsExpInput)
+                yearsExpInput.value = profile.yearsExperience?.toString() || "";
+            if (bioInput) bioInput.value = profile.bio || "";
+            if (githubInput) githubInput.value = profile.githubUrl || "";
+            if (linkedinInput) linkedinInput.value = profile.linkedinUrl || "";
+            if (instagramInput)
+                instagramInput.value = profile.instagramUrl || "";
+            if (whatsappInput) whatsappInput.value = profile.whatsappUrl || "";
+
+            // Load skills
+            skills = profile.skills || [];
+            renderSkills();
+
+            // Metadata
+            if (createdAtEl && profile.createdAt) {
+                createdAtEl.textContent = new Date(
+                    profile.createdAt,
+                ).toLocaleDateString();
+            }
+            if (updatedAtEl && profile.updatedAt) {
+                updatedAtEl.textContent = new Date(
+                    profile.updatedAt,
+                ).toLocaleDateString();
+            }
+
+            if (loading) loading.style.display = "none";
+            if (profileContent) profileContent.style.display = "block";
+        } catch (error: any) {
+            console.error("Error loading profile:", error);
+
+            if (loading) loading.style.display = "none";
+
+            if (error.message === "PROFILE_NOT_FOUND") {
+                // Profile doesn't exist yet, show create button
+                if (errorText)
+                    errorText.textContent =
+                        "No tienes un perfil aún. Crea uno para empezar.";
+                if (errorMessage) errorMessage.style.display = "block";
+            } else {
+                if (errorText)
+                    errorText.textContent = `Error: ${error.message}`;
+                if (errorMessage) errorMessage.style.display = "block";
+            }
+        }
+    }
+
+    async function saveProfile(event: Event) {
+        event.preventDefault();
+
+        try {
+            const data = {
+                jobTitle: jobTitleInput.value || undefined,
+                bio: bioInput.value || undefined,
+                skills: skills.length > 0 ? skills : undefined,
+                githubUrl: githubInput.value || undefined,
+                linkedinUrl: linkedinInput.value || undefined,
+                instagramUrl: instagramInput.value || undefined,
+                whatsappUrl: whatsappInput.value || undefined,
+                yearsExperience: yearsExpInput.value
+                    ? parseInt(yearsExpInput.value)
+                    : undefined,
+            };
+
+            await createOrUpdateProfile(data);
+            alert("✅ Perfil guardado correctamente");
+            window.location.reload();
+        } catch (error: any) {
+            console.error("Error saving profile:", error);
+            alert(`❌ Error al guardar: ${error.message}`);
+        }
+    }
+
+    if (createProfileBtn) {
+        createProfileBtn.addEventListener("click", async () => {
+            // Show empty form to create new profile
+            if (errorMessage) errorMessage.style.display = "none";
+            if (profileContent) profileContent.style.display = "block";
+
+            // Get user info from localStorage
+            const userStr = localStorage.getItem("ciber_user");
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                if (nameInput) nameInput.value = user.name || "";
+                if (emailInput) emailInput.value = user.email || "";
+            }
+        });
+    }
+
+    if (form) {
+        form.addEventListener("submit", saveProfile);
+    }
+
+    // Load profile on page load
+    document.addEventListener("astro:page-load", loadProfile);
+    document.addEventListener("DOMContentLoaded", loadProfile);
+</script>
