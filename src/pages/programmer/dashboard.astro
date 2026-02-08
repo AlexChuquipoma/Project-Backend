@@ -30,10 +30,10 @@ import Layout from "../../layouts/Layout.astro";
                             <button class="filter-btn active" data-filter="all"
                                 >TODOS</button
                             >
-                            <button class="filter-btn" data-filter="Profesional"
+                            <button class="filter-btn" data-filter="PROFESIONAL"
                                 >PROFESIONAL</button
                             >
-                            <button class="filter-btn" data-filter="Académico"
+                            <button class="filter-btn" data-filter="ACADEMICO"
                                 >ACADÉMICO</button
                             >
                         </div>
@@ -201,8 +201,8 @@ import Layout from "../../layouts/Layout.astro";
                     <div class="input-group">
                         <label>TIPO</label>
                         <select name="type" required>
-                            <option value="Profesional">Profesional</option>
-                            <option value="Académico">Académico</option>
+                            <option value="PROFESIONAL">Profesional</option>
+                            <option value="ACADEMICO">Académico</option>
                         </select>
                     </div>
                     <div class="input-group">
@@ -347,6 +347,7 @@ import Layout from "../../layouts/Layout.astro";
     // Initial Load & Functions
     // Filter Logic
     let currentFilter = "all";
+    let cachedProjects: any[] = []; // Store projects loaded from backend
     const filterBtns = document.querySelectorAll(".filter-btn");
 
     filterBtns.forEach((btn) => {
@@ -358,37 +359,39 @@ import Layout from "../../layouts/Layout.astro";
         });
     });
 
-    function loadProjects() {
-        const userStr = localStorage.getItem("ciber_user");
-        const user = userStr ? JSON.parse(userStr) : { id: "unknown" };
-        const allProjects = JSON.parse(
-            localStorage.getItem("ciber_projects") || "[]",
-        );
+    async function loadProjects() {
+        try {
+            // Fetch projects from backend
+            const { getMyProjects } =
+                await import("../../lib/services/projectService");
+            const allProjects = await getMyProjects();
 
-        // Filter by user AND type
-        let projects = allProjects.filter((p: any) => p.ownerId === user.id);
+            // Filter by type only (no need to filter by user, backend already does that)
+            let projects = allProjects;
 
-        if (currentFilter !== "all") {
-            projects = projects.filter((p: any) => p.type === currentFilter);
-        }
+            if (currentFilter !== "all") {
+                projects = projects.filter(
+                    (p: any) => p.type === currentFilter,
+                );
+            }
 
-        if (projectsGrid) {
-            projectsGrid.innerHTML = projects
-                .map(
-                    (p: any) => `
+            if (projectsGrid) {
+                projectsGrid.innerHTML = projects
+                    .map(
+                        (p: any) => `
                 <div class="db-project-card">
                     <div class="db-project-img" style="background-image: url('${p.imageUrl || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b"}')"></div>
                     <div class="db-project-info">
                         <div class="db-card-header">
                             <h3>${p.name}</h3>
                         </div>
-                        <span class="db-badge ${p.type === "Profesional" ? "pro" : "academic"}">${p.type}</span>
+                        <span class="db-badge ${p.type === "PROFESIONAL" ? "pro" : "academic"}">${p.type}</span>
                         <p>${p.description}</p>
                         <div class="db-techs">
                             ${p.techs.map((t: string) => `<span>${t}</span>`).join("")}
                         </div>
                         <div class="db-actions">
-                            <button class="action-btn primary" onclick="window.editProject(${p.id})">EDITAR</button>
+                            <button class="action-btn primary" onclick="window.editProject(${p.id})">ЕDITAR</button>
                             <button class="action-btn icon delete" onclick="window.deleteProject(${p.id})">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                             </button>
@@ -396,37 +399,48 @@ import Layout from "../../layouts/Layout.astro";
                     </div>
                 </div>
             `,
-                )
-                .join("");
+                    )
+                    .join("");
 
-            if (projects.length === 0) {
-                const emptyMsg =
-                    currentFilter === "all"
-                        ? "No hay proyectos registrados. ¡Crea el primero!"
-                        : `No hay proyectos de tipo "${currentFilter}".`;
+                if (projects.length === 0) {
+                    const emptyMsg =
+                        currentFilter === "all"
+                            ? "No hay proyectos registrados. ¡Crea el primero!"
+                            : `No hay proyectos de tipo "${currentFilter}".`;
 
-                projectsGrid.innerHTML = `<p class="no-data">${emptyMsg}</p>`;
+                    projectsGrid.innerHTML = `<p class="no-data">${emptyMsg}</p>`;
+                }
+            }
+
+            // Update cache with all projects (not filtered)
+            cachedProjects = allProjects;
+        } catch (error) {
+            console.error("Error loading projects:", error);
+            if (projectsGrid) {
+                projectsGrid.innerHTML = `<p class="no-data">❌ Error al cargar proyectos</p>`;
             }
         }
     }
 
     // Expose functions to window
-    (window as any).deleteProject = (id: number) => {
+    (window as any).deleteProject = async (id: number) => {
         if (confirm("¿Seguro que quieres eliminar este proyecto?")) {
-            const allProjects = JSON.parse(
-                localStorage.getItem("ciber_projects") || "[]",
-            );
-            const newProjects = allProjects.filter((p: any) => p.id !== id);
-            localStorage.setItem("ciber_projects", JSON.stringify(newProjects));
-            loadProjects();
+            try {
+                const { deleteProject } =
+                    await import("../../lib/services/projectService");
+                await deleteProject(id);
+                alert("✅ Proyecto eliminado exitosamente");
+                loadProjects();
+            } catch (error) {
+                console.error("Error deleting project:", error);
+                alert("❌ Error al eliminar: " + (error as Error).message);
+            }
         }
     };
 
     (window as any).editProject = (id: number) => {
-        const allProjects = JSON.parse(
-            localStorage.getItem("ciber_projects") || "[]",
-        );
-        const project = allProjects.find((p: any) => p.id === id);
+        // Find project in cached data from backend
+        const project = cachedProjects.find((p: any) => p.id === id);
 
         if (project && projectForm) {
             isEditing = true;
@@ -439,7 +453,7 @@ import Layout from "../../layouts/Layout.astro";
             (form.elements.namedItem("type") as HTMLSelectElement).value =
                 project.type;
             (form.elements.namedItem("role") as HTMLSelectElement).value =
-                project.role;
+                project.role || "";
             (
                 form.elements.namedItem("description") as HTMLTextAreaElement
             ).value = project.description;
@@ -450,7 +464,7 @@ import Layout from "../../layouts/Layout.astro";
             (form.elements.namedItem("deployUrl") as HTMLInputElement).value =
                 project.deployUrl;
             (form.elements.namedItem("imageUrl") as HTMLInputElement).value =
-                project.imageUrl;
+                project.imageUrl || "";
 
             openModal(true);
         }
@@ -641,7 +655,7 @@ import Layout from "../../layouts/Layout.astro";
     }
 
     if (projectForm) {
-        projectForm.addEventListener("submit", (e) => {
+        projectForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const formData = new FormData(projectForm as HTMLFormElement);
             const userStr = localStorage.getItem("ciber_user");
@@ -651,54 +665,67 @@ import Layout from "../../layouts/Layout.astro";
             const techs = techsString.split(",").map((t) => t.trim());
 
             if (isEditing && currentEditId) {
-                // Update Existing
-                const allProjects = JSON.parse(
-                    localStorage.getItem("ciber_projects") || "[]",
-                );
-                const index = allProjects.findIndex(
-                    (p: any) => p.id === currentEditId,
-                );
+                // Update Existing - Save to Backend
+                const imageUrlValue = formData.get("imageUrl") as string | null;
+                const roleValue = formData.get("role") as string | null;
 
-                if (index !== -1) {
-                    allProjects[index] = {
-                        ...allProjects[index],
-                        name: formData.get("name"),
-                        type: formData.get("type"),
-                        role: formData.get("role"),
-                        description: formData.get("description"),
-                        techs: techs,
-                        repoUrl: formData.get("repoUrl"),
-                        deployUrl: formData.get("deployUrl"),
-                        imageUrl: formData.get("imageUrl"),
-                    };
-                    localStorage.setItem(
-                        "ciber_projects",
-                        JSON.stringify(allProjects),
-                    );
-                }
-            } else {
-                // Create New
-                const newProject = {
-                    id: Date.now(),
-                    ownerId: user.id || "alex-panther",
-                    name: formData.get("name"),
-                    type: formData.get("type"),
-                    role: formData.get("role"),
-                    description: formData.get("description"),
+                const updateData = {
+                    name: formData.get("name") as string,
+                    type: formData.get("type") as string,
+                    description: formData.get("description") as string,
                     techs: techs,
-                    repoUrl: formData.get("repoUrl"),
-                    deployUrl: formData.get("deployUrl"),
-                    imageUrl: formData.get("imageUrl"),
+                    repoUrl: formData.get("repoUrl") as string,
+                    deployUrl: formData.get("deployUrl") as string,
+                    ...(imageUrlValue && { imageUrl: imageUrlValue }),
+                    ...(roleValue && { role: roleValue }),
                 };
 
-                const projects = JSON.parse(
-                    localStorage.getItem("ciber_projects") || "[]",
-                );
-                projects.push(newProject);
-                localStorage.setItem(
-                    "ciber_projects",
-                    JSON.stringify(projects),
-                );
+                try {
+                    const { updateProject } =
+                        await import("../../lib/services/projectService");
+                    await updateProject(currentEditId, updateData);
+
+                    alert("✅ Proyecto actualizado exitosamente");
+                    isEditing = false;
+                    currentEditId = null;
+                    loadProjects();
+                } catch (error) {
+                    console.error("Error updating project:", error);
+                    alert(
+                        "❌ Error al actualizar: " + (error as Error).message,
+                    );
+                    return;
+                }
+            } else {
+                // Create New - Save to Backend
+                const imageUrlValue = formData.get("imageUrl") as string | null;
+                const roleValue = formData.get("role") as string | null;
+
+                const newProjectData = {
+                    name: formData.get("name") as string,
+                    type: formData.get("type") as string,
+                    description: formData.get("description") as string,
+                    techs: techs,
+                    repoUrl: formData.get("repoUrl") as string,
+                    deployUrl: formData.get("deployUrl") as string,
+                    ...(imageUrlValue && { imageUrl: imageUrlValue }),
+                    ...(roleValue && { role: roleValue }),
+                };
+
+                try {
+                    const { createProject } =
+                        await import("../../lib/services/projectService");
+                    await createProject(newProjectData);
+
+                    alert("✅ Proyecto creado exitosamente");
+                    loadProjects(); // Reload from backend
+                } catch (error) {
+                    console.error("Error creating project:", error);
+                    alert(
+                        "❌ Error al crear el proyecto: " +
+                            (error as Error).message,
+                    );
+                }
             }
 
             loadProjects();
@@ -1089,16 +1116,16 @@ import Layout from "../../layouts/Layout.astro";
     }
 
     .db-badge.pro {
-        border-color: #bc13fe; /* Cyber Purple */
-        color: #bc13fe;
-        background: rgba(188, 19, 254, 0.1);
-        box-shadow: 0 0 5px rgba(188, 19, 254, 0.2);
-    }
-    .db-badge.academic {
-        border-color: #00f3ff; /* Electric Blue */
+        border-color: #00f3ff; /* Electric Blue/Celeste - PROFESIONAL */
         color: #00f3ff;
         background: rgba(0, 243, 255, 0.1);
         box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+    }
+    .db-badge.academic {
+        border-color: #bc13fe; /* Cyber Purple/Morado - ACADEMICO */
+        color: #bc13fe;
+        background: rgba(188, 19, 254, 0.1);
+        box-shadow: 0 0 5px rgba(188, 19, 254, 0.2);
     }
 
     .db-project-info p {

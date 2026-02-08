@@ -117,6 +117,17 @@ import Layout from "../../layouts/Layout.astro";
 </Layout>
 
 <script>
+    import {
+        getAllUsers,
+        updateUserRole,
+        deleteUser,
+    } from "../../lib/services/adminService";
+    import {
+        getAllSchedules,
+        createSchedule,
+        deleteSchedule,
+    } from "../../lib/services/scheduleService";
+
     // Auth Check
     const userStr = localStorage.getItem("ciber_user");
     if (!userStr) {
@@ -152,8 +163,23 @@ import Layout from "../../layouts/Layout.astro";
     const usersBody = document.getElementById("users-body");
     const userSearch = document.getElementById("user-search");
 
-    function loadUsers() {
-        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
+    async function loadUsers() {
+        try {
+            // Fetch from API
+            const users = await getAllUsers();
+
+            // Sync with localStorage for other tabs compatibility
+            localStorage.setItem("ciber_user_db", JSON.stringify(users));
+
+            renderUsersTable(users);
+            loadProgrammerOptions(); // Refresh programmer list
+        } catch (error) {
+            console.error(error);
+            alert("Error al cargar usuarios");
+        }
+    }
+
+    function renderUsersTable(users: any[]) {
         const searchTerm = (userSearch as HTMLInputElement).value.toLowerCase();
 
         const filteredUsers = users.filter(
@@ -174,14 +200,30 @@ import Layout from "../../layouts/Layout.astro";
                     </td>
                     <td>${u.email}</td>
                     <td>
-                        <select onchange="window.updateUserRole('${u.id}', this.value)" class="role-select ${u.role}">
-                            <option value="user" ${u.role === "user" ? "selected" : ""}>Usuario</option>
-                            <option value="programmer" ${u.role === "programmer" ? "selected" : ""}>Programador</option>
-                            <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
+                        <select onchange="window.updateUserRole('${
+                            u.id
+                        }', this.value)" class="role-select-global ${u.role ? u.role.toLowerCase() : "user"}">
+                            <option value="user" ${
+                                u.role?.toLowerCase() === "user"
+                                    ? "selected"
+                                    : ""
+                            }>Usuario</option>
+                            <option value="programmer" ${
+                                u.role?.toLowerCase() === "programmer"
+                                    ? "selected"
+                                    : ""
+                            }>Programador</option>
+                            <option value="admin" ${
+                                u.role?.toLowerCase() === "admin"
+                                    ? "selected"
+                                    : ""
+                            }>Admin</option>
                         </select>
                     </td>
                     <td>
-                        <button class="action-btn delete" onclick="window.deleteUser('${u.id}')">ELIMINAR</button>
+                        <button class="action-btn-global delete" onclick="window.deleteUser('${
+                            u.id
+                        }')">ELIMINAR</button>
                     </td>
                 </tr>
             `,
@@ -190,9 +232,15 @@ import Layout from "../../layouts/Layout.astro";
         }
     }
 
-    if (userSearch) userSearch.addEventListener("input", loadUsers);
+    if (userSearch)
+        userSearch.addEventListener("input", () => {
+            const users = JSON.parse(
+                localStorage.getItem("ciber_user_db") || "[]",
+            );
+            renderUsersTable(users);
+        });
 
-    (window as any).updateUserRole = (id: string, newRole: string) => {
+    (window as any).updateUserRole = async (id: string, newRole: string) => {
         if (
             !confirm(
                 `¿Estás seguro de cambiar el rol de este usuario a '${newRole.toUpperCase()}'?`,
@@ -202,38 +250,43 @@ import Layout from "../../layouts/Layout.astro";
             return;
         }
 
-        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
-        const index = users.findIndex((u: any) => u.id === id);
-        if (index !== -1) {
-            users[index].role = newRole;
-            localStorage.setItem("ciber_user_db", JSON.stringify(users));
+        try {
+            await updateUserRole(id, newRole);
 
-            // Sync with session if it's me
+            // Update current user session if it's me
             const currentUser = JSON.parse(
                 localStorage.getItem("ciber_user") || "{}",
             );
-            if (currentUser.id === id) {
+            // Assuming ID is string in local but backend uses Long.
+            // API response uses string usually if mapped from Long in types?
+            // UserDTO uses Long. JSON converts to number.
+            // Frontend generic ID usage might be mixed. toString() ensures comparison.
+            if (currentUser.id == id) {
                 currentUser.role = newRole;
                 localStorage.setItem("ciber_user", JSON.stringify(currentUser));
                 if (newRole !== "admin") location.reload();
             }
-            loadUsers();
-            loadProgrammerOptions();
+
+            loadUsers(); // Reload table
+        } catch (error) {
+            console.error(error);
+            alert("Error al actualizar rol");
         }
     };
 
-    (window as any).deleteUser = (id: string) => {
+    (window as any).deleteUser = async (id: string) => {
         if (
             confirm(
                 "⚠ ADVERTENCIA ⚠\n\n¿Estás seguro de ELIMINAR a este usuario permanentemente?\nEsta acción no se puede deshacer.",
             )
         ) {
-            let users = JSON.parse(
-                localStorage.getItem("ciber_user_db") || "[]",
-            );
-            users = users.filter((u: any) => u.id !== id);
-            localStorage.setItem("ciber_user_db", JSON.stringify(users));
-            loadUsers();
+            try {
+                await deleteUser(id);
+                loadUsers();
+            } catch (error) {
+                console.error(error);
+                alert("Error al eliminar usuario");
+            }
         }
     };
 
@@ -242,9 +295,11 @@ import Layout from "../../layouts/Layout.astro";
     const progSelect = document.getElementById("prog-select");
     const scheduleList = document.getElementById("schedule-list");
 
-    function loadProgrammerOptions() {
+    async function loadProgrammerOptions() {
         const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
-        const programmers = users.filter((u: any) => u.role === "programmer");
+        const programmers = users.filter(
+            (u: any) => u.role?.toLowerCase() === "programmer",
+        );
 
         if (progSelect) {
             progSelect.innerHTML =
@@ -258,78 +313,75 @@ import Layout from "../../layouts/Layout.astro";
         }
     }
 
-    function loadSchedules() {
-        const schedules = JSON.parse(
-            localStorage.getItem("ciber_schedules") || "[]",
-        );
-        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
+    async function loadSchedules() {
+        try {
+            const schedules = await getAllSchedules();
 
-        if (scheduleList) {
-            if (schedules.length === 0) {
-                scheduleList.innerHTML =
-                    '<li class="empty-state">No hay horarios activos configurados.</li>';
-                return;
+            if (scheduleList) {
+                if (schedules.length === 0) {
+                    scheduleList.innerHTML =
+                        '<li class="empty-state">No hay horarios activos configurados.</li>';
+                    return;
+                }
+
+                scheduleList.innerHTML = schedules
+                    .map((s: any) => {
+                        return `
+                        <li class="schedule-item">
+                            <div class="schedule-info">
+                                <span class="prog-name">${s.programmerName || "Desconocido"}</span>
+                                <span class="schedule-date">${s.date} <span class="time-badge">${s.time}</span></span>
+                            </div>
+                            <button class="delete-btn" onclick="window.deleteSchedule('${s.id}')">
+                                🗑️
+                            </button>
+                        </li>
+                    `;
+                    })
+                    .join("");
             }
-
-            scheduleList.innerHTML = schedules
-                .map((s: any) => {
-                    const prog = users.find(
-                        (u: any) => u.id === s.programmerId,
-                    );
-                    const progName = prog ? prog.name : "Usuario Eliminado";
-                    return `
-                    <li class="schedule-item">
-                        <div class="schedule-info">
-                            <span class="prog-name">${progName}</span>
-                            <span class="schedule-date">${s.date} <span class="time-badge">${s.time}</span></span>
-                        </div>
-                        <button class="delete-btn" onclick="window.deleteSchedule('${s.id}')">
-                            🗑️
-                        </button>
-                    </li>
-                `;
-                })
-                .join("");
+        } catch (error) {
+            console.error("Error loading schedules:", error);
+            if (scheduleList)
+                scheduleList.innerHTML =
+                    '<li class="empty-state error">Error al cargar horarios.</li>';
         }
     }
 
     if (scheduleForm) {
-        scheduleForm.addEventListener("submit", (e) => {
+        scheduleForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             const formData = new FormData(scheduleForm as HTMLFormElement);
 
-            // Basic Validation
             if (!formData.get("programmerId")) {
                 alert("Debes seleccionar un programador.");
                 return;
             }
 
-            const newSchedule = {
-                id: Date.now().toString(),
-                programmerId: formData.get("programmerId"),
-                date: formData.get("date"),
-                time: formData.get("time"),
-                status: "available",
-            };
-
-            const schedules = JSON.parse(
-                localStorage.getItem("ciber_schedules") || "[]",
-            );
-            schedules.push(newSchedule);
-            localStorage.setItem("ciber_schedules", JSON.stringify(schedules));
-
-            loadSchedules();
-            (scheduleForm as HTMLFormElement).reset();
+            try {
+                await createSchedule({
+                    programmerId: formData.get("programmerId") as string,
+                    date: formData.get("date") as string,
+                    time: formData.get("time") as string,
+                });
+                loadSchedules();
+                (scheduleForm as HTMLFormElement).reset();
+            } catch (error) {
+                console.error(error);
+                alert("Error al crear horario");
+            }
         });
     }
 
-    (window as any).deleteSchedule = (id: string) => {
-        let schedules = JSON.parse(
-            localStorage.getItem("ciber_schedules") || "[]",
-        );
-        schedules = schedules.filter((s: any) => s.id !== id);
-        localStorage.setItem("ciber_schedules", JSON.stringify(schedules));
-        loadSchedules();
+    (window as any).deleteSchedule = async (id: string) => {
+        if (!confirm("¿Eliminar este horario?")) return;
+        try {
+            await deleteSchedule(id);
+            loadSchedules();
+        } catch (error) {
+            console.error(error);
+            alert("Error al eliminar horario");
+        }
     };
 
     // --- ADVISORIES VIEW ---
@@ -574,66 +626,6 @@ import Layout from "../../layouts/Layout.astro";
         color: white;
     }
 
-    /* ROLE SELECT - Custom Styling */
-    .role-select {
-        appearance: none;
-        -webkit-appearance: none;
-        background-color: rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-family: var(--font-body);
-        font-size: 0.9rem;
-        transition: all 0.3s;
-        min-width: 120px;
-        text-align: center;
-    }
-
-    .role-select:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-color: var(--cyber-purple);
-    }
-
-    .role-select:focus {
-        outline: none;
-        box-shadow: 0 0 10px rgba(188, 19, 254, 0.3);
-    }
-
-    .role-select.admin {
-        border-color: var(--cyber-purple);
-        color: var(--cyber-purple);
-        font-weight: bold;
-    }
-    .role-select.programmer {
-        border-color: var(--neon-green);
-        color: var(--neon-green);
-    }
-
-    /* ACTION BUTTONS */
-    .action-btn {
-        background: rgba(255, 0, 0, 0.1);
-        border: 1px solid rgba(255, 0, 0, 0.5);
-        color: #ff4d4d;
-        padding: 0.5rem 1.2rem;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: all 0.2s;
-        border-radius: 4px;
-        font-family: var(--font-heading);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: bold;
-    }
-
-    .action-btn:hover {
-        background: #ff4d4d;
-        color: white;
-        box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
-        transform: scale(1.05);
-    }
-
     .cyber-button {
         background: linear-gradient(45deg, var(--cyber-purple), #9d00e0);
         color: white;
@@ -867,4 +859,99 @@ import Layout from "../../layouts/Layout.astro";
     }
 </style>
 
+<style is:global>
+    /* DYNAMIC CONTENT STYLES (Admin Dashboard) */
 
+    /* ROLE SELECT */
+    .role-select-global {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: rgba(5, 10, 8, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        padding: 0.6rem 2rem 0.6rem 1rem !important; /* Reduced padding-right */
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        min-width: 140px;
+        text-align: left;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.8rem center;
+    }
+
+    .role-select-global option {
+        background-color: #050a08;
+        color: white;
+    }
+
+    .role-select-global:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-color: #bc13fe !important;
+    }
+
+    .role-select-global:focus {
+        outline: none;
+        box-shadow: 0 0 10px rgba(188, 19, 254, 0.3);
+    }
+
+    .role-select-global.admin {
+        border-color: #bc13fe !important;
+        color: #bc13fe !important;
+        font-weight: bold;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23bc13fe' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    }
+    .role-select-global.programmer {
+        border-color: #39ff14 !important;
+        color: #39ff14 !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2339ff14' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    }
+
+    /* ACTION BUTTONS */
+    .action-btn-global {
+        background: rgba(255, 50, 50, 0.05);
+        border: 1px solid rgba(255, 50, 50, 0.3);
+        color: #ff4d4d;
+        padding: 0.6rem 1.5rem;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.3s;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: bold;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-btn-global::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 50, 50, 0.2),
+            transparent
+        );
+        transition: 0.5s;
+    }
+
+    .action-btn-global:hover::before {
+        left: 100%;
+    }
+
+    .action-btn-global:hover {
+        background: rgba(255, 50, 50, 0.15);
+        color: #ff8080;
+        border-color: #ff4d4d;
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        text-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+        transform: translateY(-2px);
+    }
+</style>

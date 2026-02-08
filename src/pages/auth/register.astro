@@ -57,6 +57,36 @@ import Layout from "../../layouts/Layout.astro";
                     <div class="input-line"></div>
                 </div>
 
+                <div class="input-group role-selector">
+                    <p>TIPO DE CUENTA</p>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input
+                                type="radio"
+                                name="role"
+                                value="user"
+                                checked
+                            />
+                            <span class="custom-radio"></span>
+                            RECLUTADOR
+                        </label>
+                        <label class="radio-label">
+                            <input
+                                type="radio"
+                                name="role"
+                                value="programmer"
+                            />
+                            <span class="custom-radio"></span>
+                            OPERADOR
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="role" value="admin" />
+                            <span class="custom-radio"></span>
+                            ADMINISTRADOR
+                        </label>
+                    </div>
+                </div>
+
                 <button type="submit" class="cyber-button">
                     INICIAR REGISTRO
                     <span class="btn-glitch"></span>
@@ -91,6 +121,10 @@ import Layout from "../../layouts/Layout.astro";
                         const confirm = formData.get(
                             "confirm-password",
                         ) as string;
+                        const role = formData.get("role") as
+                            | "user"
+                            | "programmer"
+                            | "admin";
 
                         // Clear previous errors
                         errorContainer.textContent = "";
@@ -123,7 +157,7 @@ import Layout from "../../layouts/Layout.astro";
                             name: name.trim(),
                             email: email.trim(),
                             password,
-                            role: "user", // Default role
+                            role: role || "user",
                         };
 
                         try {

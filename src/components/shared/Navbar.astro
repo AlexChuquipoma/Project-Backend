@@ -383,6 +383,7 @@
         if (userStr && authItem) {
             const user = JSON.parse(userStr);
             const avatarUrl =
+                user.imageUrl ||
                 user.image ||
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=39ff14&color=050a08&bold=true`;
 

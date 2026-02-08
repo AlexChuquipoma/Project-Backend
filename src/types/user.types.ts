@@ -5,6 +5,9 @@ export interface User {
     email: string;
     role: 'user' | 'programmer' | 'admin';
     token: string;
+    imageUrl?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface LoginCredentials {
@@ -16,5 +19,5 @@ export interface RegisterData {
     name: string;
     email: string;
     password: string;
-    role?: 'user' | 'programmer';
+    role?: 'user' | 'programmer' | 'admin';
 }
