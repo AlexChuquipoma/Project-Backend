@@ -83,6 +83,27 @@ export async function getProfileByUserId(userId: number): Promise<ProgrammerProf
 }
 
 /**
+ * Get ALL programmer profiles (public, no authentication required)
+ * Useful for displaying all programmers in the showcase/directory
+ */
+export async function getAllProfiles(): Promise<ProgrammerProfile[]> {
+    const response = await fetch(`${API_BASE_URL}/api/profiles/all`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        console.error('Failed to fetch all profiles:', error);
+        return []; // Return empty array instead of throwing to prevent page from breaking
+    }
+
+    return response.json();
+}
+
+/**
  * Create or update profile (requires authentication)
  */
 export async function createOrUpdateProfile(data: UpdateProfileData): Promise<ProgrammerProfile> {

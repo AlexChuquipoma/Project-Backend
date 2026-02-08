@@ -1,0 +1,447 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Mi Cuenta | CiberPortfolio">
+    <div class="account-container">
+        <header class="page-header">
+            <h1 class="glitch" data-text="MI CUENTA">MI CUENTA</h1>
+            <p class="subtitle">CONFIGURACIÓN DE USUARIO</p>
+        </header>
+
+        <!-- Loading State -->
+        <div
+            id="loading"
+            class="glass-panel"
+            style="text-align: center; padding: 3rem;"
+        >
+            <p style="color: var(--neon-green);">Cargando información...</p>
+        </div>
+
+        <!-- Account Form -->
+        <div id="account-content" class="glass-panel" style="display: none;">
+            <form id="account-form" class="account-form">
+                <!-- User Credentials Section -->
+                <div class="section-header">
+                    <h2>INFORMACIÓN DE CUENTA</h2>
+                </div>
+
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="name">NOMBRE COMPLETO</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            placeholder="Tu nombre completo"
+                            required
+                        />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="email">EMAIL</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            readonly
+                            class="readonly-input"
+                            title="El email no se puede cambiar"
+                        />
+                        <small style="color: #aaa;"
+                            >El email no se puede modificar</small
+                        >
+                    </div>
+                </div>
+
+                <!-- Profile Image Section -->
+                <div class="section-header" style="margin-top: 2rem;">
+                    <h2>IMAGEN DE PERFIL</h2>
+                </div>
+
+                <div class="input-group">
+                    <label for="imageUrl">URL DE LA IMAGEN</label>
+                    <input
+                        type="url"
+                        id="imageUrl"
+                        name="imageUrl"
+                        placeholder="https://ejemplo.com/mi-foto.jpg"
+                    />
+                    <small style="color: #aaa;"
+                        >Opcional: URL de tu foto de perfil</small
+                    >
+                </div>
+
+                <div
+                    class="image-preview"
+                    id="imagePreview"
+                    style="display: none;"
+                >
+                    <img id="previewImg" src="" alt="Vista previa" />
+                </div>
+
+                <!-- Change Password Section -->
+                <div class="section-header" style="margin-top: 2rem;">
+                    <h2>CAMBIAR CONTRASEÑA</h2>
+                </div>
+
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="currentPassword">CONTRASEÑA ACTUAL</label>
+                        <input
+                            type="password"
+                            id="currentPassword"
+                            name="currentPassword"
+                            placeholder="Tu contraseña actual"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="newPassword">NUEVA CONTRASEÑA</label>
+                        <input
+                            type="password"
+                            id="newPassword"
+                            name="newPassword"
+                            placeholder="Nueva contraseña (mínimo 6 caracteres)"
+                            minlength="6"
+                        />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="confirmPassword"
+                            >CONFIRMAR NUEVA CONTRASEÑA</label
+                        >
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            placeholder="Repite la nueva contraseña"
+                            minlength="6"
+                        />
+                    </div>
+                </div>
+
+                <small
+                    style="color: #aaa; display: block; margin-bottom: 1.5rem;"
+                >
+                    * Deja los campos de contraseña vacíos si no deseas
+                    cambiarla
+                </small>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <button type="submit" class="cyber-button">
+                        GUARDAR CAMBIOS
+                    </button>
+                    <a
+                        href="/programmer/dashboard"
+                        class="cyber-button secondary"
+                    >
+                        VOLVER AL DASHBOARD
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</Layout>
+
+<style>
+    .account-container {
+        min-height: 100vh;
+        padding: 8rem 2rem 2rem;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 100%);
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .page-header h1 {
+        font-size: 3.5rem;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        color: var(--neon-green);
+        font-size: 1rem;
+        letter-spacing: 3px;
+        font-family: "Orbitron", sans-serif;
+    }
+
+    .glass-panel {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(57, 255, 20, 0.2);
+        border-radius: 12px;
+        padding: 2.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .account-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .section-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--neon-green);
+    }
+
+    .section-header h2 {
+        color: var(--neon-green);
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        font-family: "Orbitron", sans-serif;
+        margin: 0;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .input-group label {
+        color: var(--neon-green);
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: 1px;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        font-family: var(--font-body);
+        font-size: 1rem;
+        border-radius: 4px;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    .input-group input:focus {
+        border-color: var(--neon-green);
+    }
+
+    .readonly-input {
+        background: rgba(0, 0, 0, 0.3) !important;
+        color: #aaa !important;
+        border-color: transparent !important;
+        cursor: not-allowed;
+    }
+
+    .input-group small {
+        margin-top: 0.3rem;
+        font-size: 0.75rem;
+    }
+
+    .image-preview {
+        margin-top: 1rem;
+        text-align: center;
+    }
+
+    .image-preview img {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 50%;
+        border: 3px solid var(--neon-green);
+        object-fit: cover;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .cyber-button {
+        flex: 1;
+        padding: 1rem 2rem;
+        background: var(--neon-green);
+        color: black;
+        border: none;
+        font-family: "Orbitron", sans-serif;
+        font-size: 1rem;
+        font-weight: bold;
+        letter-spacing: 2px;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        border-radius: 4px;
+        transition: all 0.3s;
+        display: inline-block;
+    }
+
+    .cyber-button:hover {
+        box-shadow: 0 0 30px var(--neon-green);
+        transform: translateY(-2px);
+    }
+
+    .cyber-button.secondary {
+        background: transparent;
+        border: 1px solid var(--neon-green);
+        color: var(--neon-green);
+    }
+
+    .cyber-button.secondary:hover {
+        background: var(--neon-green);
+        color: black;
+    }
+
+    .glitch {
+        position: relative;
+        font-family: "Orbitron", sans-serif;
+        font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+        .account-container {
+            padding: 6rem 1rem 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    import { getUser } from "../../lib/utils/localStorage";
+
+    const loading = document.getElementById("loading");
+    const accountContent = document.getElementById("account-content");
+    const form = document.getElementById("account-form") as HTMLFormElement;
+
+    const nameInput = document.getElementById("name") as HTMLInputElement;
+    const emailInput = document.getElementById("email") as HTMLInputElement;
+    const imageUrlInput = document.getElementById(
+        "imageUrl",
+    ) as HTMLInputElement;
+    const currentPasswordInput = document.getElementById(
+        "currentPassword",
+    ) as HTMLInputElement;
+    const newPasswordInput = document.getElementById(
+        "newPassword",
+    ) as HTMLInputElement;
+    const confirmPasswordInput = document.getElementById(
+        "confirmPassword",
+    ) as HTMLInputElement;
+    const imagePreview = document.getElementById("imagePreview");
+    const previewImg = document.getElementById(
+        "previewImg",
+    ) as HTMLImageElement;
+
+    // Load user data
+    function loadUserData() {
+        const user = getUser();
+        if (!user) {
+            window.location.href = "/auth/login";
+            return;
+        }
+
+        nameInput.value = user.name || "";
+        emailInput.value = user.email || "";
+
+        // Show content
+        if (loading) loading.style.display = "none";
+        if (accountContent) accountContent.style.display = "block";
+    }
+
+    // Image preview
+    if (imageUrlInput) {
+        imageUrlInput.addEventListener("blur", () => {
+            const url = imageUrlInput.value.trim();
+            if (url) {
+                previewImg.src = url;
+                if (imagePreview) imagePreview.style.display = "block";
+                previewImg.onerror = () => {
+                    if (imagePreview) imagePreview.style.display = "none";
+                };
+            } else {
+                if (imagePreview) imagePreview.style.display = "none";
+            }
+        });
+    }
+
+    // Form submission
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            // Validate passwords if trying to change
+            const currentPass = currentPasswordInput.value;
+            const newPass = newPasswordInput.value;
+            const confirmPass = confirmPasswordInput.value;
+
+            if (newPass || confirmPass) {
+                if (!currentPass) {
+                    alert(
+                        "❌ Debes ingresar tu contraseña actual para cambiarla",
+                    );
+                    return;
+                }
+
+                if (newPass !== confirmPass) {
+                    alert("❌ Las contraseñas nuevas no coinciden");
+                    return;
+                }
+
+                if (newPass.length < 6) {
+                    alert(
+                        "❌ La nueva contraseña debe tener al menos 6 caracteres",
+                    );
+                    return;
+                }
+            }
+
+            try {
+                const user = getUser();
+                if (!user || !user.token) {
+                    alert("❌ No estás autenticado");
+                    window.location.href = "/auth/login";
+                    return;
+                }
+
+                // TODO: Implement backend API call to update user
+                // For now, just update localStorage for name
+                const updatedUser = {
+                    ...user,
+                    name: nameInput.value,
+                };
+                localStorage.setItem("ciber_user", JSON.stringify(updatedUser));
+
+                alert("✅ Información actualizada correctamente");
+                window.location.reload();
+            } catch (error: any) {
+                console.error("Error updating account:", error);
+                alert(`❌ Error: ${error.message}`);
+            }
+        });
+    }
+
+    // Load on page initialization
+    loadUserData();
+</script>

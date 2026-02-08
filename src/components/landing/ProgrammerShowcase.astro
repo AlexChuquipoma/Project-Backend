@@ -1,32 +1,32 @@
 ---
 import ProgrammerCard from "./ProgrammerCard.astro";
+import { getAllProfiles } from "../../lib/services/profileService";
 
-const programmers = [
-    {
-        id: "alex-panther",
-        name: "Alex 'Panther' Code",
-        role: "Full Stack Developer",
-        image: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?q=80&w=1000&auto=format&fit=crop", // Placeholder until we generate custom ones if needed
-        skills: ["React", "Node.js", "MongoDB"],
-        socials: { github: "#", linkedin: "#" },
-    },
-    {
-        id: "sarah-viper",
-        name: "Sarah 'Viper' Script",
-        role: "Frontend Specialist",
-        image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=1000&auto=format&fit=crop",
-        skills: ["Vue", "Three.js", "CSS"],
-        socials: { github: "#", twitter: "#" },
-    },
-    {
-        id: "david-bear",
-        name: "David 'Bear' Data",
-        role: "Backend Architect",
-        image: "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?q=80&w=1000&auto=format&fit=crop",
-        skills: ["Python", "Docker", "PostgreSQL"],
-        socials: { linkedin: "#" },
-    },
-];
+// Fetch real programmer profiles from backend
+let programmers: any[] = [];
+try {
+    const profiles = await getAllProfiles();
+
+    // Transform backend profiles to match ProgrammerCard format
+    programmers = profiles.map((profile) => ({
+        id: profile.userId.toString(),
+        name: profile.userName,
+        role: profile.jobTitle || "Developer",
+        image:
+            profile.imageUrl ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.userName)}&size=400&background=random`,
+        skills: profile.skills?.slice(0, 3) || [], // Show first 3 skills
+        socials: {
+            github: profile.githubUrl || undefined,
+            linkedin: profile.linkedinUrl || undefined,
+            instagram: profile.instagramUrl || undefined,
+        },
+    }));
+} catch (error) {
+    console.error("Failed to load programmer profiles:", error);
+    // Fallback to empty array if API fails
+    programmers = [];
+}
 ---
 
 <section id="programmers" class="programmers-section section-padding">

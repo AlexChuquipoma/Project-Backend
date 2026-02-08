@@ -15,7 +15,9 @@ import Layout from "../../layouts/Layout.astro";
             <button class="tab-btn active" data-tab="projects">PROYECTOS</button
             >
             <button class="tab-btn" data-tab="requests">SOLICITUDES</button>
-            <button class="tab-btn" data-tab="profile">MI PERFIL</button>
+            <button class="tab-btn" data-tab="profile"
+                >PERFIL PROFESIONAL</button
+            >
         </div>
 
         <div class="dashboard-content">
@@ -527,68 +529,62 @@ import Layout from "../../layouts/Layout.astro";
     // Profile Logic
     const profileForm = document.getElementById("profile-form");
 
-    function loadProfile() {
+    async function loadProfile() {
         const userStr = localStorage.getItem("ciber_user");
         if (!userStr) return;
 
-        const user = JSON.parse(userStr);
-        const profileData = JSON.parse(
-            localStorage.getItem("ciber_programmer_profile") || "{}",
-        );
+        try {
+            // Import the profile service
+            const { getMyProfile } =
+                await import("../../lib/services/profileService");
 
-        // Load saved profile data or defaults
-        const profile = profileData[user.id] || {
-            role: "",
-            bio: "",
-            skills: [],
-            social: {
-                github: "",
-                linkedin: "",
-                instagram: "",
-                whatsapp: "",
-            },
-        };
+            // Fetch profile from backend
+            const profile = await getMyProfile();
 
-        // Populate form
-        const roleInput = document.getElementById(
-            "profile-role",
-        ) as HTMLInputElement;
-        const bioInput = document.getElementById(
-            "profile-bio",
-        ) as HTMLTextAreaElement;
-        const skillsInput = document.getElementById(
-            "profile-skills",
-        ) as HTMLInputElement;
-        const githubInput = document.getElementById(
-            "profile-github",
-        ) as HTMLInputElement;
-        const linkedinInput = document.getElementById(
-            "profile-linkedin",
-        ) as HTMLInputElement;
-        const instagramInput = document.getElementById(
-            "profile-instagram",
-        ) as HTMLInputElement;
-        const whatsappInput = document.getElementById(
-            "profile-whatsapp",
-        ) as HTMLInputElement;
+            // Populate form
+            const roleInput = document.getElementById(
+                "profile-role",
+            ) as HTMLInputElement;
+            const bioInput = document.getElementById(
+                "profile-bio",
+            ) as HTMLTextAreaElement;
+            const skillsInput = document.getElementById(
+                "profile-skills",
+            ) as HTMLInputElement;
+            const githubInput = document.getElementById(
+                "profile-github",
+            ) as HTMLInputElement;
+            const linkedinInput = document.getElementById(
+                "profile-linkedin",
+            ) as HTMLInputElement;
+            const instagramInput = document.getElementById(
+                "profile-instagram",
+            ) as HTMLInputElement;
+            const whatsappInput = document.getElementById(
+                "profile-whatsapp",
+            ) as HTMLInputElement;
 
-        if (roleInput) roleInput.value = profile.role || "";
-        if (bioInput) bioInput.value = profile.bio || "";
-        if (skillsInput)
-            skillsInput.value = Array.isArray(profile.skills)
-                ? profile.skills.join(", ")
-                : "";
-        if (githubInput) githubInput.value = profile.social?.github || "";
-        if (linkedinInput) linkedinInput.value = profile.social?.linkedin || "";
-        if (instagramInput)
-            instagramInput.value = profile.social?.instagram || "";
-        if (whatsappInput) whatsappInput.value = profile.social?.whatsapp || "";
+            if (roleInput) roleInput.value = profile.jobTitle || "";
+            if (bioInput) bioInput.value = profile.bio || "";
+            if (skillsInput)
+                skillsInput.value = Array.isArray(profile.skills)
+                    ? profile.skills.join(", ")
+                    : "";
+            if (githubInput) githubInput.value = profile.githubUrl || "";
+            if (linkedinInput) linkedinInput.value = profile.linkedinUrl || "";
+            if (instagramInput)
+                instagramInput.value = profile.instagramUrl || "";
+            if (whatsappInput) whatsappInput.value = profile.whatsappUrl || "";
+        } catch (error: any) {
+            // Profile doesn't exist yet - leave form empty
+            console.log("No profile found yet, user can create one");
+        }
     }
 
     loadProfile();
 
     if (profileForm) {
-        profileForm.addEventListener("submit", (e) => {
+        profileForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const userStr = localStorage.getItem("ciber_user");
@@ -604,36 +600,42 @@ import Layout from "../../layouts/Layout.astro";
                 .map((s) => s.trim())
                 .filter((s) => s.length > 0);
 
-            // Build profile object
-            const profileUpdate = {
-                role: formData.get("role"),
-                bio: formData.get("bio"),
-                skills: skills,
-                social: {
-                    github: formData.get("github") || "",
-                    linkedin: formData.get("linkedin") || "",
-                    instagram: formData.get("instagram") || "",
-                    whatsapp: formData.get("whatsapp") || "",
-                },
-            };
+            try {
+                // Import the profile service
+                const { createOrUpdateProfile } =
+                    await import("../../lib/services/profileService");
 
-            // Save to localStorage
-            const allProfiles = JSON.parse(
-                localStorage.getItem("ciber_programmer_profile") || "{}",
-            );
-            allProfiles[user.id] = profileUpdate;
-            localStorage.setItem(
-                "ciber_programmer_profile",
-                JSON.stringify(allProfiles),
-            );
+                // Build profile data for API
+                const profileData = {
+                    jobTitle: formData.get("role") as string,
+                    bio: formData.get("bio") as string,
+                    skills: skills,
+                    githubUrl: (formData.get("github") as string) || undefined,
+                    linkedinUrl:
+                        (formData.get("linkedin") as string) || undefined,
+                    instagramUrl:
+                        (formData.get("instagram") as string) || undefined,
+                    whatsappUrl:
+                        (formData.get("whatsapp") as string) || undefined,
+                };
 
-            // Show success message
-            const successMsg = document.getElementById("profile-success");
-            if (successMsg) {
-                successMsg.classList.remove("hidden");
-                setTimeout(() => {
-                    successMsg.classList.add("hidden");
-                }, 3000);
+                // Save to backend API
+                await createOrUpdateProfile(profileData);
+
+                // Show success message
+                const successMsg = document.getElementById("profile-success");
+                if (successMsg) {
+                    successMsg.classList.remove("hidden");
+                    setTimeout(() => {
+                        successMsg.classList.add("hidden");
+                    }, 3000);
+                }
+
+                // Reload profile to show updated data
+                await loadProfile();
+            } catch (error: any) {
+                console.error("Error saving profile:", error);
+                alert(`❌ Error al guardar: ${error.message}`);
             }
         });
     }
