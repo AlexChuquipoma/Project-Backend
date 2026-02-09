@@ -1,31 +1,5 @@
 ---
-const projects = [
-    {
-        title: "Eco-Tracker AI",
-        category: "Full Stack",
-        image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1000&auto=format&fit=crop",
-        description:
-            "Sistema de monitoreo ambiental con inteligencia artificial.",
-    },
-    {
-        title: "Neuromarket",
-        category: "E-commerce",
-        image: "https://images.unsplash.com/photo-1557821552-17105176677c?q=80&w=1000&auto=format&fit=crop",
-        description: "Plataforma de comercio descentralizada.",
-    },
-    {
-        title: "Cyber-Bank Interface",
-        category: "Frontend",
-        image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=1000&auto=format&fit=crop",
-        description: "Interfaz bancaria de próxima generación.",
-    },
-    {
-        title: "Data Core Viz",
-        category: "Data Science",
-        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop",
-        description: "Visualización de datos masivos en tiempo real.",
-    },
-];
+// Client-side fetching
 ---
 
 <section id="projects" class="projects-section section-padding">
@@ -39,24 +13,61 @@ const projects = [
             inteligencias artificiales de monitoreo, nuestros resultados hablan
             en binario.
         </p>
-        <div class="project-grid">
-            {
-                projects.map((project) => (
-                    <div class="project-card">
-                        <div class="project-image">
-                            <img src={project.image} alt={project.title} />
-                            <div class="project-overlay">
-                                <h3>{project.title}</h3>
-                                <p>{project.description}</p>
-                                <span class="category">{project.category}</span>
-                            </div>
-                        </div>
-                    </div>
-                ))
-            }
+
+        <div id="projects-grid" class="project-grid">
+            <!-- Loading -->
+            <div class="loading-spinner"></div>
         </div>
     </div>
 </section>
+
+<script>
+    import { getAllProjects } from "../../lib/services/projectService";
+
+    async function loadProjects() {
+        const grid = document.getElementById("projects-grid");
+        if (!grid) return;
+
+        try {
+            const projects = await getAllProjects();
+
+            if (projects.length === 0) {
+                grid.innerHTML =
+                    '<div class="no-data">No hay proyectos destacados.</div>';
+                return;
+            }
+
+            const html = projects
+                .map((project) => {
+                    const image =
+                        project.imageUrl ||
+                        "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1000&auto=format&fit=crop";
+
+                    return `
+                    <div class="project-card">
+                        <div class="project-image">
+                            <img src="${image}" alt="${project.name}" loading="lazy" />
+                            <div class="project-overlay">
+                                <h3>${project.name}</h3>
+                                <p>${project.description || "Sin descripción"}</p>
+                                <span class="category">${project.type}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                })
+                .join("");
+
+            grid.innerHTML = html;
+        } catch (error) {
+            console.error("Failed to load projects:", error);
+            grid.innerHTML =
+                '<div class="error-msg">Error al cargar proyectos.</div>';
+        }
+    }
+
+    loadProjects();
+</script>
 
 <style>
     .section-title {
@@ -79,8 +90,42 @@ const projects = [
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 2rem;
+        min-height: 200px;
     }
 
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(57, 255, 20, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--neon-green);
+        animation: spin 1s ease-in-out infinite;
+        margin: 2rem auto;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .no-data,
+    .error-msg {
+        text-align: center;
+        color: var(--text-dim);
+        grid-column: 1 / -1;
+        padding: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+    }
+</style>
+
+<style is:global>
     .project-card {
         border-radius: 16px;
         overflow: hidden;
@@ -125,13 +170,13 @@ const projects = [
         opacity: 1;
     }
 
-    h3 {
+    .project-overlay h3 {
         color: var(--neon-green);
         margin-bottom: 1rem;
         font-size: 1.5rem;
     }
 
-    p {
+    .project-overlay p {
         color: var(--text-main);
         margin-bottom: 1.5rem;
     }
@@ -143,12 +188,5 @@ const projects = [
         border-radius: 50px;
         font-size: 0.8rem;
         text-transform: uppercase;
-    }
-
-    @media (max-width: 768px) {
-        .section-title {
-            font-size: 2rem;
-            margin-bottom: 2rem;
-        }
     }
 </style>

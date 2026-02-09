@@ -61,8 +61,8 @@ import Layout from "../../layouts/Layout.astro";
                             <tr>
                                 <th>FECHA</th>
                                 <th>USUARIO</th>
-                                <th>CORREO</th>
-                                <th>NOTA</th>
+                                <th>ASUNTO</th>
+                                <th>RESPUESTA</th>
                                 <th>ESTADO</th>
                                 <th>ACCIÓN</th>
                             </tr>
@@ -78,7 +78,7 @@ import Layout from "../../layouts/Layout.astro";
             <div id="schedule-view" class="view-section hidden">
                 <div class="view-header">
                     <h2>GESTIÓN DE DISPONIBILIDAD</h2>
-                    <button id="add-schedule-btn" class="cyber-button small"
+                    <button id="open-schedule-modal" class="cyber-button small"
                         >+ NUEVO HORARIO</button
                     >
                 </div>
@@ -88,9 +88,56 @@ import Layout from "../../layouts/Layout.astro";
                         <!-- Schedules will be loaded here -->
                     </div>
                 </div>
+
+                <!-- New Schedule Modal (Scoped to this view or moved out) -->
+                <!-- Keeping it here as per original structure but ensuring correct nesting -->
+                <div id="schedule-modal" class="modal-overlay hidden">
+                    <div class="modal-content">
+                        <button id="close-schedule-modal" class="close-btn"
+                            >&times;</button
+                        >
+                        <h2>AGREGAR NUEVO HORARIO</h2>
+                        <form id="schedule-form">
+                            <div class="input-group">
+                                <label>FECHA</label>
+                                <input
+                                    type="date"
+                                    id="schedule-date"
+                                    required
+                                    class="cyber-input"
+                                />
+                            </div>
+                            <div class="input-group">
+                                <label>HORA</label>
+                                <input
+                                    type="time"
+                                    id="schedule-time"
+                                    required
+                                    class="cyber-input"
+                                />
+                            </div>
+                            <div class="input-group">
+                                <label>MODALIDAD</label>
+                                <select
+                                    id="schedule-modality"
+                                    required
+                                    class="cyber-input"
+                                >
+                                    <option value="VIRTUAL">Virtual</option>
+                                    <option value="PRESENCIAL"
+                                        >Presencial</option
+                                    >
+                                </select>
+                            </div>
+                            <button type="submit" class="cyber-button"
+                                >CONFIRMAR HORARIO</button
+                            >
+                        </form>
+                    </div>
+                </div>
             </div>
 
-            <!-- Stats View -->
+            <!-- Stats View (Moved OUT of schedule-view) -->
             <div id="stats-view" class="view-section hidden">
                 <div class="view-header">
                     <h2>RENDIMIENTO DE ASESORÍAS</h2>
@@ -109,6 +156,49 @@ import Layout from "../../layouts/Layout.astro";
 
                 <div class="mini-stats" id="mini-stats-container">
                     <!-- Numbers will be injected here -->
+                </div>
+
+                <div class="export-section">
+                    <h3>📂 EXPORTAR REPORTES</h3>
+                    <div class="export-buttons">
+                        <button class="export-btn pdf" onclick="generatePDF()">
+                            <span class="icon">📄</span> DESCARGAR PDF
+                        </button>
+                        <button
+                            class="export-btn excel"
+                            onclick="generateExcel()"
+                        >
+                            <span class="icon">📊</span> DESCARGAR EXCEL
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Respond Request Modal -->
+            <div id="respond-modal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <button id="close-respond-modal" class="close-btn"
+                        >&times;</button
+                    >
+                    <h2 id="respond-modal-title">RESPONDER SOLICITUD</h2>
+                    <form id="respond-form">
+                        <input type="hidden" id="respond-id" />
+                        <input type="hidden" id="respond-status" />
+
+                        <div class="input-group">
+                            <label>Mensaje de Respuesta / Asunto</label>
+                            <textarea
+                                id="respond-message"
+                                rows="4"
+                                required
+                                placeholder="Escribe un mensaje para el usuario..."
+                            ></textarea>
+                        </div>
+
+                        <button type="submit" class="cyber-button"
+                            >ENVIAR RESPUESTA</button
+                        >
+                    </form>
                 </div>
             </div>
 
@@ -298,130 +388,130 @@ import Layout from "../../layouts/Layout.astro";
             </form>
         </div>
     </div>
-</Layout>
 
-<script>
-    // Auth Check
-    const userStr = localStorage.getItem("ciber_user");
-    if (!userStr) {
-        window.location.href = "/auth/login";
-    } else {
-        const user = JSON.parse(userStr);
-        if (user.role !== "programmer") {
-            alert("Acceso denegado: Área restringida a Operadores.");
-            window.location.href = "/";
-        }
-    }
-
-    // Tabs Logic
-    const tabs = document.querySelectorAll(".tab-btn");
-    const views = document.querySelectorAll(".view-section");
-
-    tabs.forEach((tab) => {
-        tab.addEventListener("click", () => {
-            tabs.forEach((t) => t.classList.remove("active"));
-            views.forEach((v) => v.classList.add("hidden"));
-            views.forEach((v) => v.classList.remove("active"));
-
-            tab.classList.add("active");
-            const viewId = (tab as HTMLElement).dataset.tab + "-view";
-            const view = document.getElementById(viewId);
-            if (view) {
-                view.classList.remove("hidden");
-                view.classList.add("active");
-
-                // Load specific data if needed
-                if (viewId === "stats-view") loadStats();
-                if (viewId === "schedule-view") loadSchedules();
-            }
-        });
-    });
-
-    // Project Logic
-    const projectModal = document.getElementById("project-modal");
-    const addProjectBtn = document.getElementById("add-project-btn");
-    const closeProjectBtn = document.getElementById("close-project-modal");
-    const projectForm = document.getElementById("project-form");
-    const projectsGrid = document.getElementById("projects-grid");
-    const modalTitle = document.getElementById("modal-title");
-    const submitBtn = document.getElementById("submit-btn");
-
-    let isEditing = false;
-    let currentEditId: number | null = null;
-
-    if (addProjectBtn && projectModal) {
-        addProjectBtn.addEventListener("click", () => {
-            openModal();
-        });
-    }
-
-    const openModal = (editMode = false) => {
-        if (!projectModal) return;
-
-        projectModal.classList.remove("hidden");
-        setTimeout(() => {
-            projectModal.classList.add("active");
-        }, 10);
-
-        if (modalTitle && submitBtn) {
-            if (editMode) {
-                modalTitle.textContent = "EDITAR PROYECTO";
-                submitBtn.textContent = "ACTUALIZAR PROYECTO";
-            } else {
-                modalTitle.textContent = "REGISTRAR PROYECTO";
-                submitBtn.textContent = "GUARDAR PROYECTO";
-                (projectForm as HTMLFormElement).reset();
-                isEditing = false;
-                currentEditId = null;
+    <script>
+        // Auth Check
+        const userStr = localStorage.getItem("ciber_user");
+        if (!userStr) {
+            window.location.href = "/auth/login";
+        } else {
+            const user = JSON.parse(userStr);
+            if (user.role !== "programmer") {
+                alert("Acceso denegado: Área restringida a Operadores.");
+                window.location.href = "/";
             }
         }
-    };
 
-    const closeModal = () => {
-        if (projectModal) {
-            projectModal.classList.remove("active");
+        // Tabs Logic
+        const tabs = document.querySelectorAll(".tab-btn");
+        const views = document.querySelectorAll(".view-section");
+
+        tabs.forEach((tab) => {
+            tab.addEventListener("click", () => {
+                tabs.forEach((t) => t.classList.remove("active"));
+                views.forEach((v) => v.classList.add("hidden"));
+                views.forEach((v) => v.classList.remove("active"));
+
+                tab.classList.add("active");
+                const viewId = (tab as HTMLElement).dataset.tab + "-view";
+                const view = document.getElementById(viewId);
+                if (view) {
+                    view.classList.remove("hidden");
+                    view.classList.add("active");
+
+                    // Load specific data if needed
+                    if (viewId === "stats-view") loadStats();
+                    if (viewId === "schedule-view") loadSchedules();
+                }
+            });
+        });
+
+        // Project Logic
+        const projectModal = document.getElementById("project-modal");
+        const addProjectBtn = document.getElementById("add-project-btn");
+        const closeProjectBtn = document.getElementById("close-project-modal");
+        const projectForm = document.getElementById("project-form");
+        const projectsGrid = document.getElementById("projects-grid");
+        const modalTitle = document.getElementById("modal-title");
+        const submitBtn = document.getElementById("submit-btn");
+
+        let isEditing = false;
+        let currentEditId: number | null = null;
+
+        if (addProjectBtn && projectModal) {
+            addProjectBtn.addEventListener("click", () => {
+                openModal();
+            });
+        }
+
+        const openModal = (editMode = false) => {
+            if (!projectModal) return;
+
+            projectModal.classList.remove("hidden");
             setTimeout(() => {
-                projectModal.classList.add("hidden");
-            }, 300); // Wait for transition
-        }
-    };
-    if (closeProjectBtn) closeProjectBtn.addEventListener("click", closeModal);
+                projectModal.classList.add("active");
+            }, 10);
 
-    // Initial Load & Functions
-    // Filter Logic
-    let currentFilter = "all";
-    let cachedProjects: any[] = []; // Store projects loaded from backend
-    const filterBtns = document.querySelectorAll(".filter-btn");
-
-    filterBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-            filterBtns.forEach((b) => b.classList.remove("active"));
-            btn.classList.add("active");
-            currentFilter = (btn as HTMLElement).dataset.filter || "all";
-            loadProjects();
-        });
-    });
-
-    async function loadProjects() {
-        try {
-            // Fetch projects from backend
-            const { getMyProjects } =
-                await import("../../lib/services/projectService");
-            const allProjects = await getMyProjects();
-
-            // Filter by type only (no need to filter by user, backend already does that)
-            let projects = allProjects;
-
-            if (currentFilter !== "all") {
-                projects = projects.filter(
-                    (p: any) => p.type === currentFilter,
-                );
+            if (modalTitle && submitBtn) {
+                if (editMode) {
+                    modalTitle.textContent = "EDITAR PROYECTO";
+                    submitBtn.textContent = "ACTUALIZAR PROYECTO";
+                } else {
+                    modalTitle.textContent = "REGISTRAR PROYECTO";
+                    submitBtn.textContent = "GUARDAR PROYECTO";
+                    (projectForm as HTMLFormElement).reset();
+                    isEditing = false;
+                    currentEditId = null;
+                }
             }
+        };
 
-            if (projectsGrid) {
-                projectsGrid.innerHTML = projects
-                    .map(
-                        (p: any) => `
+        const closeModal = () => {
+            if (projectModal) {
+                projectModal.classList.remove("active");
+                setTimeout(() => {
+                    projectModal.classList.add("hidden");
+                }, 300); // Wait for transition
+            }
+        };
+        if (closeProjectBtn)
+            closeProjectBtn.addEventListener("click", closeModal);
+
+        // Initial Load & Functions
+        // Filter Logic
+        let currentFilter = "all";
+        let cachedProjects: any[] = []; // Store projects loaded from backend
+        const filterBtns = document.querySelectorAll(".filter-btn");
+
+        filterBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                filterBtns.forEach((b) => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = (btn as HTMLElement).dataset.filter || "all";
+                loadProjects();
+            });
+        });
+
+        async function loadProjects() {
+            try {
+                // Fetch projects from backend
+                const { getMyProjects } =
+                    await import("../../lib/services/projectService");
+                const allProjects = await getMyProjects();
+
+                // Filter by type only (no need to filter by user, backend already does that)
+                let projects = allProjects;
+
+                if (currentFilter !== "all") {
+                    projects = projects.filter(
+                        (p: any) => p.type === currentFilter,
+                    );
+                }
+
+                if (projectsGrid) {
+                    projectsGrid.innerHTML = projects
+                        .map(
+                            (p: any) => `
                 <div class="db-project-card">
                     <div class="db-project-img" style="background-image: url('${p.imageUrl || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b"}')"></div>
                     <div class="db-project-info">
@@ -442,125 +532,199 @@ import Layout from "../../layouts/Layout.astro";
                     </div>
                 </div>
             `,
-                    )
-                    .join("");
+                        )
+                        .join("");
 
-                if (projects.length === 0) {
-                    const emptyMsg =
-                        currentFilter === "all"
-                            ? "No hay proyectos registrados. ¡Crea el primero!"
-                            : `No hay proyectos de tipo "${currentFilter}".`;
+                    if (projects.length === 0) {
+                        const emptyMsg =
+                            currentFilter === "all"
+                                ? "No hay proyectos registrados. ¡Crea el primero!"
+                                : `No hay proyectos de tipo "${currentFilter}".`;
 
-                    projectsGrid.innerHTML = `<p class="no-data">${emptyMsg}</p>`;
+                        projectsGrid.innerHTML = `<p class="no-data">${emptyMsg}</p>`;
+                    }
+                }
+
+                // Update cache with all projects (not filtered)
+                cachedProjects = allProjects;
+            } catch (error) {
+                console.error("Error loading projects:", error);
+                if (projectsGrid) {
+                    projectsGrid.innerHTML = `<p class="no-data">❌ Error al cargar proyectos</p>`;
                 }
             }
-
-            // Update cache with all projects (not filtered)
-            cachedProjects = allProjects;
-        } catch (error) {
-            console.error("Error loading projects:", error);
-            if (projectsGrid) {
-                projectsGrid.innerHTML = `<p class="no-data">❌ Error al cargar proyectos</p>`;
-            }
         }
-    }
 
-    // Expose functions to window
-    (window as any).deleteProject = async (id: number) => {
-        if (confirm("¿Seguro que quieres eliminar este proyecto?")) {
+        // Expose functions to window
+        (window as any).deleteProject = async (id: number) => {
+            if (confirm("¿Seguro que quieres eliminar este proyecto?")) {
+                try {
+                    const { deleteProject } =
+                        await import("../../lib/services/projectService");
+                    await deleteProject(id);
+                    alert("✅ Proyecto eliminado exitosamente");
+                    loadProjects();
+                } catch (error) {
+                    console.error("Error deleting project:", error);
+                    alert("❌ Error al eliminar: " + (error as Error).message);
+                }
+            }
+        };
+
+        (window as any).editProject = (id: number) => {
+            // Find project in cached data from backend
+            const project = cachedProjects.find((p: any) => p.id === id);
+
+            if (project && projectForm) {
+                isEditing = true;
+                currentEditId = id;
+
+                // Populate form
+                const form = projectForm as HTMLFormElement;
+                (form.elements.namedItem("name") as HTMLInputElement).value =
+                    project.name;
+                (form.elements.namedItem("type") as HTMLSelectElement).value =
+                    project.type;
+                (form.elements.namedItem("role") as HTMLSelectElement).value =
+                    project.role || "";
+                (
+                    form.elements.namedItem(
+                        "description",
+                    ) as HTMLTextAreaElement
+                ).value = project.description;
+                (form.elements.namedItem("techs") as HTMLInputElement).value =
+                    project.techs.join(", ");
+                (form.elements.namedItem("repoUrl") as HTMLInputElement).value =
+                    project.repoUrl;
+                (
+                    form.elements.namedItem("deployUrl") as HTMLInputElement
+                ).value = project.deployUrl;
+                (
+                    form.elements.namedItem("imageUrl") as HTMLInputElement
+                ).value = project.imageUrl || "";
+
+                openModal(true);
+            }
+        };
+
+        // Requests Logic
+        const respondModal = document.getElementById("respond-modal");
+        const respondForm = document.getElementById("respond-form");
+        const closeRespondBtn = document.getElementById("close-respond-modal");
+
+        if (closeRespondBtn) {
+            closeRespondBtn.addEventListener("click", () => {
+                respondModal?.classList.add("hidden");
+                respondModal?.classList.remove("active");
+            });
+        }
+
+        (window as any).openRespondModal = (id: number, status: string) => {
+            if (respondModal) {
+                (
+                    document.getElementById("respond-id") as HTMLInputElement
+                ).value = id.toString();
+                (
+                    document.getElementById(
+                        "respond-status",
+                    ) as HTMLInputElement
+                ).value = status;
+                (
+                    document.getElementById(
+                        "respond-message",
+                    ) as HTMLTextAreaElement
+                ).value = "";
+
+                const title = document.getElementById("respond-modal-title");
+                if (title)
+                    title.textContent =
+                        status === "ACCEPTED"
+                            ? "ACEPTAR SOLICITUD"
+                            : "RECHAZAR SOLICITUD";
+
+                respondModal.classList.remove("hidden");
+                setTimeout(() => respondModal.classList.add("active"), 10);
+            }
+        };
+
+        if (respondForm) {
+            respondForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const id = parseInt(
+                    (document.getElementById("respond-id") as HTMLInputElement)
+                        .value,
+                );
+                const status = (
+                    document.getElementById(
+                        "respond-status",
+                    ) as HTMLInputElement
+                ).value;
+                const message = (
+                    document.getElementById(
+                        "respond-message",
+                    ) as HTMLTextAreaElement
+                ).value;
+
+                try {
+                    const { updateAdvisoryStatus } =
+                        await import("../../lib/services/advisoryService");
+                    await updateAdvisoryStatus(id, status, message);
+
+                    alert(
+                        `Solicitud ${status === "ACCEPTED" ? "ACEPTADA" : "RECHAZADA"} correctamente.`,
+                    );
+                    respondModal?.classList.add("hidden");
+                    respondModal?.classList.remove("active");
+                    loadRequests(); // Refresh
+                } catch (error: any) {
+                    console.error(error);
+                    alert("Error al procesar solicitud: " + error.message);
+                }
+            });
+        }
+
+        async function loadRequests() {
+            const requestsBody = document.getElementById("requests-body");
+            if (!requestsBody) return;
+
             try {
-                const { deleteProject } =
-                    await import("../../lib/services/projectService");
-                await deleteProject(id);
-                alert("✅ Proyecto eliminado exitosamente");
-                loadProjects();
-            } catch (error) {
-                console.error("Error deleting project:", error);
-                alert("❌ Error al eliminar: " + (error as Error).message);
-            }
-        }
-    };
+                const user = JSON.parse(
+                    localStorage.getItem("ciber_user") || "{}",
+                );
+                if (!user.id) return;
 
-    (window as any).editProject = (id: number) => {
-        // Find project in cached data from backend
-        const project = cachedProjects.find((p: any) => p.id === id);
+                const { getAdvisoriesByProgrammer } =
+                    await import("../../lib/services/advisoryService");
+                console.log("Fetching requests for Programmer ID:", user.id);
+                const requests = await getAdvisoriesByProgrammer(
+                    parseInt(user.id),
+                );
+                console.log("Dashboard Requests received:", requests);
 
-        if (project && projectForm) {
-            isEditing = true;
-            currentEditId = id;
-
-            // Populate form
-            const form = projectForm as HTMLFormElement;
-            (form.elements.namedItem("name") as HTMLInputElement).value =
-                project.name;
-            (form.elements.namedItem("type") as HTMLSelectElement).value =
-                project.type;
-            (form.elements.namedItem("role") as HTMLSelectElement).value =
-                project.role || "";
-            (
-                form.elements.namedItem("description") as HTMLTextAreaElement
-            ).value = project.description;
-            (form.elements.namedItem("techs") as HTMLInputElement).value =
-                project.techs.join(", ");
-            (form.elements.namedItem("repoUrl") as HTMLInputElement).value =
-                project.repoUrl;
-            (form.elements.namedItem("deployUrl") as HTMLInputElement).value =
-                project.deployUrl;
-            (form.elements.namedItem("imageUrl") as HTMLInputElement).value =
-                project.imageUrl || "";
-
-            openModal(true);
-        }
-    };
-
-    // Requests Logic
-    (window as any).updateRequestStatus = (
-        id: string,
-        status: "accepted" | "rejected",
-    ) => {
-        const requests = JSON.parse(
-            localStorage.getItem("ciber_requests") || "[]",
-        );
-        const index = requests.findIndex((r: any) => r.id === id.toString()); // Ensure string comparison
-
-        if (index !== -1) {
-            requests[index].status = status;
-            localStorage.setItem("ciber_requests", JSON.stringify(requests));
-            loadRequests(); // Refresh table
-            alert(
-                `Solicitud ${status === "accepted" ? "ACEPTADA" : "RECHAZADA"} correctamente.`,
-            );
-        }
-    };
-
-    function loadRequests() {
-        const requestsBody = document.getElementById("requests-body");
-        const requests = JSON.parse(
-            localStorage.getItem("ciber_requests") || "[]",
-        );
-
-        if (requestsBody) {
-            requestsBody.innerHTML = requests
-                .sort(
-                    (a: any, b: any) =>
-                        new Date(b.timestamp).getTime() -
-                        new Date(a.timestamp).getTime(),
-                )
-                .map(
-                    (r: any) => `
+                requestsBody.innerHTML = requests
+                    .sort(
+                        (a: any, b: any) =>
+                            new Date(b.date).getTime() -
+                            new Date(a.date).getTime(),
+                    )
+                    .map(
+                        (r: any) => `
                 <tr>
-                    <td>${new Date(r.timestamp).toLocaleDateString()}</td>
-                    <td>${r.userName}</td>
-                    <td>${r.userEmail}</td>
-                    <td>${r.notes || "-"}</td>
-                    <td><span class="status ${r.status}">${r.status === "pending" ? "PENDIENTE" : r.status === "accepted" ? "ACEPTADO" : "RECHAZADO"}</span></td>
+                    <td>
+                        <div>${r.date}</div>
+                        <small style="color:var(--text-dim)">${r.time}</small>
+                    </td>
+                    <td>${r.userName || "Usuario"}</td>
+                    <td style="max-width: 200px; overflow:hidden; text-overflow:ellipsis;">${r.message}</td>
+                    <td style="max-width: 200px; overflow:hidden; text-overflow:ellipsis; color:var(--neon-green)">${r.responseMessage || "-"}</td>
+                    <td><span class="status ${r.status.toLowerCase()}">${r.status}</span></td>
                     <td>
                         ${
-                            r.status === "pending"
+                            r.status === "PENDING"
                                 ? `
                             <div class="actions-row" style="display:flex; gap:0.5rem;">
-                                <button class="action-btn" style="background:var(--neon-green); color:black; font-size:0.7rem; padding:0.4rem 0.8rem;" onclick="window.updateRequestStatus('${r.id}', 'accepted')">ACEPTAR</button>
-                                <button class="action-btn" style="background:#ff3333; color:white; font-size:0.7rem; padding:0.4rem 0.8rem;" onclick="window.updateRequestStatus('${r.id}', 'rejected')">RECHAZAR</button>
+                                <button class="action-btn" style="background:var(--neon-green); color:black; font-size:0.7rem; padding:0.4rem 0.8rem;" onclick="window.openRespondModal(${r.id}, 'ACCEPTED')">ACEPTAR</button>
+                                <button class="action-btn" style="background:#ff3333; color:white; font-size:0.7rem; padding:0.4rem 0.8rem;" onclick="window.openRespondModal(${r.id}, 'REJECTED')">RECHAZAR</button>
                             </div>
                         `
                                 : `
@@ -570,346 +734,532 @@ import Layout from "../../layouts/Layout.astro";
                     </td>
                 </tr>
             `,
-                )
-                .join("");
+                    )
+                    .join("");
 
-            if (requests.length === 0) {
+                if (requests.length === 0) {
+                    requestsBody.innerHTML =
+                        '<tr><td colspan="6" class="no-data">No hay solicitudes pendientes.</td></tr>';
+                }
+            } catch (error) {
+                console.error("Error loading requests:", error);
                 requestsBody.innerHTML =
-                    '<tr><td colspan="6" class="no-data">No hay solicitudes pendientes.</td></tr>';
+                    '<tr><td colspan="6" class="no-data">Error al cargar solicitudes.</td></tr>';
             }
         }
-    }
 
-    loadProjects();
-    loadRequests();
+        loadProjects();
+        loadRequests();
 
-    // Profile Logic
-    const profileForm = document.getElementById("profile-form");
+        // Profile Logic
+        const profileForm = document.getElementById("profile-form");
 
-    async function loadProfile() {
-        const userStr = localStorage.getItem("ciber_user");
-        if (!userStr) return;
-
-        try {
-            // Import the profile service
-            const { getMyProfile } =
-                await import("../../lib/services/profileService");
-
-            // Fetch profile from backend
-            const profile = await getMyProfile();
-
-            // Populate form
-            const roleInput = document.getElementById(
-                "profile-role",
-            ) as HTMLInputElement;
-            const bioInput = document.getElementById(
-                "profile-bio",
-            ) as HTMLTextAreaElement;
-            const skillsInput = document.getElementById(
-                "profile-skills",
-            ) as HTMLInputElement;
-            const githubInput = document.getElementById(
-                "profile-github",
-            ) as HTMLInputElement;
-            const linkedinInput = document.getElementById(
-                "profile-linkedin",
-            ) as HTMLInputElement;
-            const instagramInput = document.getElementById(
-                "profile-instagram",
-            ) as HTMLInputElement;
-            const whatsappInput = document.getElementById(
-                "profile-whatsapp",
-            ) as HTMLInputElement;
-
-            if (roleInput) roleInput.value = profile.jobTitle || "";
-            if (bioInput) bioInput.value = profile.bio || "";
-            if (skillsInput)
-                skillsInput.value = Array.isArray(profile.skills)
-                    ? profile.skills.join(", ")
-                    : "";
-            if (githubInput) githubInput.value = profile.githubUrl || "";
-            if (linkedinInput) linkedinInput.value = profile.linkedinUrl || "";
-            if (instagramInput)
-                instagramInput.value = profile.instagramUrl || "";
-            if (whatsappInput) whatsappInput.value = profile.whatsappUrl || "";
-        } catch (error: any) {
-            // Profile doesn't exist yet - leave form empty
-            console.log("No profile found yet, user can create one");
-        }
-    }
-
-    loadProfile();
-
-    if (profileForm) {
-        profileForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
+        async function loadProfile() {
             const userStr = localStorage.getItem("ciber_user");
             if (!userStr) return;
 
-            const user = JSON.parse(userStr);
-            const formData = new FormData(profileForm as HTMLFormElement);
-
-            // Parse skills
-            const skillsString = formData.get("skills") as string;
-            const skills = skillsString
-                .split(",")
-                .map((s) => s.trim())
-                .filter((s) => s.length > 0);
-
             try {
                 // Import the profile service
-                const { createOrUpdateProfile } =
+                const { getMyProfile } =
                     await import("../../lib/services/profileService");
 
-                // Build profile data for API
-                const profileData = {
-                    jobTitle: formData.get("role") as string,
-                    bio: formData.get("bio") as string,
-                    skills: skills,
-                    githubUrl: (formData.get("github") as string) || undefined,
-                    linkedinUrl:
-                        (formData.get("linkedin") as string) || undefined,
-                    instagramUrl:
-                        (formData.get("instagram") as string) || undefined,
-                    whatsappUrl:
-                        (formData.get("whatsapp") as string) || undefined,
-                };
+                // Fetch profile from backend
+                const profile = await getMyProfile();
 
-                // Save to backend API
-                await createOrUpdateProfile(profileData);
+                // Populate form
+                const roleInput = document.getElementById(
+                    "profile-role",
+                ) as HTMLInputElement;
+                const bioInput = document.getElementById(
+                    "profile-bio",
+                ) as HTMLTextAreaElement;
+                const skillsInput = document.getElementById(
+                    "profile-skills",
+                ) as HTMLInputElement;
+                const githubInput = document.getElementById(
+                    "profile-github",
+                ) as HTMLInputElement;
+                const linkedinInput = document.getElementById(
+                    "profile-linkedin",
+                ) as HTMLInputElement;
+                const instagramInput = document.getElementById(
+                    "profile-instagram",
+                ) as HTMLInputElement;
+                const whatsappInput = document.getElementById(
+                    "profile-whatsapp",
+                ) as HTMLInputElement;
 
-                // Show success message
-                const successMsg = document.getElementById("profile-success");
-                if (successMsg) {
-                    successMsg.classList.remove("hidden");
-                    setTimeout(() => {
-                        successMsg.classList.add("hidden");
-                    }, 3000);
-                }
-
-                // Reload profile to show updated data
-                await loadProfile();
+                if (roleInput) roleInput.value = profile.jobTitle || "";
+                if (bioInput) bioInput.value = profile.bio || "";
+                if (skillsInput)
+                    skillsInput.value = Array.isArray(profile.skills)
+                        ? profile.skills.join(", ")
+                        : "";
+                if (githubInput) githubInput.value = profile.githubUrl || "";
+                if (linkedinInput)
+                    linkedinInput.value = profile.linkedinUrl || "";
+                if (instagramInput)
+                    instagramInput.value = profile.instagramUrl || "";
+                if (whatsappInput)
+                    whatsappInput.value = profile.whatsappUrl || "";
             } catch (error: any) {
-                console.error("Error saving profile:", error);
-                alert(`❌ Error al guardar: ${error.message}`);
+                // Profile doesn't exist yet - leave form empty
+                console.log("No profile found yet, user can create one");
             }
-        });
-    }
+        }
 
-    if (projectForm) {
-        projectForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = new FormData(projectForm as HTMLFormElement);
-            const userStr = localStorage.getItem("ciber_user");
-            const user = userStr ? JSON.parse(userStr) : { id: "unknown" };
+        loadProfile();
 
-            const techsString = formData.get("techs") as string;
-            const techs = techsString.split(",").map((t) => t.trim());
+        if (profileForm) {
+            profileForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
 
-            if (isEditing && currentEditId) {
-                // Update Existing - Save to Backend
-                const imageUrlValue = formData.get("imageUrl") as string | null;
-                const roleValue = formData.get("role") as string | null;
+                const userStr = localStorage.getItem("ciber_user");
+                if (!userStr) return;
 
-                const updateData = {
-                    name: formData.get("name") as string,
-                    type: formData.get("type") as string,
-                    description: formData.get("description") as string,
-                    techs: techs,
-                    repoUrl: formData.get("repoUrl") as string,
-                    deployUrl: formData.get("deployUrl") as string,
-                    ...(imageUrlValue && { imageUrl: imageUrlValue }),
-                    ...(roleValue && { role: roleValue }),
-                };
+                const user = JSON.parse(userStr);
+                const formData = new FormData(profileForm as HTMLFormElement);
+
+                // Parse skills
+                const skillsString = formData.get("skills") as string;
+                const skills = skillsString
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter((s) => s.length > 0);
 
                 try {
-                    const { updateProject } =
-                        await import("../../lib/services/projectService");
-                    await updateProject(currentEditId, updateData);
+                    // Import the profile service
+                    const { createOrUpdateProfile } =
+                        await import("../../lib/services/profileService");
 
-                    alert("✅ Proyecto actualizado exitosamente");
-                    isEditing = false;
-                    currentEditId = null;
-                    loadProjects();
-                } catch (error) {
-                    console.error("Error updating project:", error);
-                    alert(
-                        "❌ Error al actualizar: " + (error as Error).message,
-                    );
-                    return;
+                    // Build profile data for API
+                    const profileData = {
+                        jobTitle: formData.get("role") as string,
+                        bio: formData.get("bio") as string,
+                        skills: skills,
+                        githubUrl:
+                            (formData.get("github") as string) || undefined,
+                        linkedinUrl:
+                            (formData.get("linkedin") as string) || undefined,
+                        instagramUrl:
+                            (formData.get("instagram") as string) || undefined,
+                        whatsappUrl:
+                            (formData.get("whatsapp") as string) || undefined,
+                    };
+
+                    // Save to backend API
+                    await createOrUpdateProfile(profileData);
+
+                    // Show success message
+                    const successMsg =
+                        document.getElementById("profile-success");
+                    if (successMsg) {
+                        successMsg.classList.remove("hidden");
+                        setTimeout(() => {
+                            successMsg.classList.add("hidden");
+                        }, 3000);
+                    }
+
+                    // Reload profile to show updated data
+                    await loadProfile();
+                } catch (error: any) {
+                    console.error("Error saving profile:", error);
+                    alert(`❌ Error al guardar: ${error.message}`);
                 }
-            } else {
-                // Create New - Save to Backend
-                const imageUrlValue = formData.get("imageUrl") as string | null;
-                const roleValue = formData.get("role") as string | null;
+            });
+        }
 
-                const newProjectData = {
-                    name: formData.get("name") as string,
-                    type: formData.get("type") as string,
-                    description: formData.get("description") as string,
-                    techs: techs,
-                    repoUrl: formData.get("repoUrl") as string,
-                    deployUrl: formData.get("deployUrl") as string,
-                    ...(imageUrlValue && { imageUrl: imageUrlValue }),
-                    ...(roleValue && { role: roleValue }),
-                };
+        if (projectForm) {
+            projectForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const formData = new FormData(projectForm as HTMLFormElement);
+                const userStr = localStorage.getItem("ciber_user");
+                const user = userStr ? JSON.parse(userStr) : { id: "unknown" };
 
-                try {
-                    const { createProject } =
-                        await import("../../lib/services/projectService");
-                    await createProject(newProjectData);
+                const techsString = formData.get("techs") as string;
+                const techs = techsString.split(",").map((t) => t.trim());
 
-                    alert("✅ Proyecto creado exitosamente");
-                    loadProjects(); // Reload from backend
-                } catch (error) {
-                    console.error("Error creating project:", error);
-                    alert(
-                        "❌ Error al crear el proyecto: " +
-                            (error as Error).message,
-                    );
+                if (isEditing && currentEditId) {
+                    // Update Existing - Save to Backend
+                    const imageUrlValue = formData.get("imageUrl") as
+                        | string
+                        | null;
+                    const roleValue = formData.get("role") as string | null;
+
+                    const updateData = {
+                        name: formData.get("name") as string,
+                        type: formData.get("type") as string,
+                        description: formData.get("description") as string,
+                        techs: techs,
+                        repoUrl: formData.get("repoUrl") as string,
+                        deployUrl: formData.get("deployUrl") as string,
+                        ...(imageUrlValue && { imageUrl: imageUrlValue }),
+                        ...(roleValue && { role: roleValue }),
+                    };
+
+                    try {
+                        const { updateProject } =
+                            await import("../../lib/services/projectService");
+                        await updateProject(currentEditId, updateData);
+
+                        alert("✅ Proyecto actualizado exitosamente");
+                        isEditing = false;
+                        currentEditId = null;
+                        loadProjects();
+                    } catch (error) {
+                        console.error("Error updating project:", error);
+                        alert(
+                            "❌ Error al actualizar: " +
+                                (error as Error).message,
+                        );
+                        return;
+                    }
+                } else {
+                    // Create New - Save to Backend
+                    const imageUrlValue = formData.get("imageUrl") as
+                        | string
+                        | null;
+                    const roleValue = formData.get("role") as string | null;
+
+                    const newProjectData = {
+                        name: formData.get("name") as string,
+                        type: formData.get("type") as string,
+                        description: formData.get("description") as string,
+                        techs: techs,
+                        repoUrl: formData.get("repoUrl") as string,
+                        deployUrl: formData.get("deployUrl") as string,
+                        ...(imageUrlValue && { imageUrl: imageUrlValue }),
+                        ...(roleValue && { role: roleValue }),
+                    };
+
+                    try {
+                        const { createProject } =
+                            await import("../../lib/services/projectService");
+                        await createProject(newProjectData);
+
+                        alert("✅ Proyecto creado exitosamente");
+                        loadProjects(); // Reload from backend
+                    } catch (error) {
+                        console.error("Error creating project:", error);
+                        alert(
+                            "❌ Error al crear el proyecto: " +
+                                (error as Error).message,
+                        );
+                    }
                 }
-            }
 
-            loadProjects();
-            closeModal();
-            (projectForm as HTMLFormElement).reset();
-        });
-    }
+                loadProjects();
+                closeModal();
+                (projectForm as HTMLFormElement).reset();
+            });
+        }
 
-    // Stats and Chart Implementation
-    let statusChart: any = null;
-    let modalityChart: any = null;
+        // Stats and Chart Implementation
+        let statusChart: any = null;
+        let modalityChart: any = null;
 
-    async function loadStats() {
-        try {
-            const user = JSON.parse(localStorage.getItem("ciber_user") || "{}");
-            if (!user.id) return;
+        async function loadStats() {
+            try {
+                const user = JSON.parse(
+                    localStorage.getItem("ciber_user") || "{}",
+                );
+                if (!user.id) return;
 
-            const { getProgrammerStats } =
-                await import("../../lib/services/advisoryService");
-            const stats = await getProgrammerStats(parseInt(user.id));
+                const { getProgrammerStats } =
+                    await import("../../lib/services/advisoryService");
+                const stats = await getProgrammerStats(parseInt(user.id));
 
-            // Update mini stats
-            const container = document.getElementById("mini-stats-container");
-            if (container) {
-                container.innerHTML = `
+                // Update mini stats
+                const container = document.getElementById(
+                    "mini-stats-container",
+                );
+                if (container) {
+                    container.innerHTML = `
                     <div class="mini-stat-card">
-                        <h4>${stats.total}</h4>
+                        <h4 style="color: #ffffff">${stats.total}</h4>
                         <p>Total Asesorías</p>
                     </div>
                     <div class="mini-stat-card">
-                        <h4>${stats.completed}</h4>
-                        <p>Completadas</p>
-                    </div>
-                    <div class="mini-stat-card">
-                        <h4>${stats.pending}</h4>
+                        <h4 style="color: #facc15">${stats.pending}</h4>
                         <p>Pendientes</p>
                     </div>
+                    <div class="mini-stat-card">
+                        <h4 style="color: #39ff14">${stats.accepted}</h4>
+                        <p>Aceptadas</p>
+                    </div>
+                    <div class="mini-stat-card">
+                        <h4 style="color: #ff4444">${stats.rejected}</h4>
+                        <p>Rechazadas</p>
+                    </div>
+                    <div class="mini-stat-card">
+                        <h4 style="color: #00f3ff">${stats.virtual}</h4>
+                        <p>Virtual</p>
+                    </div>
+                    <div class="mini-stat-card">
+                        <h4 style="color: #bd00ff">${stats.presencial}</h4>
+                        <p>Presencial</p>
+                    </div>
                 `;
-            }
+                }
 
-            // Render Charts
-            const Chart = (await import("chart.js/auto")).default;
+                // Render Charts
+                const Chart = (await import("chart.js/auto")).default;
 
-            // Status Chart
-            const ctxStatus = document.getElementById(
-                "statusChart",
-            ) as HTMLCanvasElement;
-            if (ctxStatus) {
-                if (statusChart) statusChart.destroy();
-                statusChart = new Chart(ctxStatus, {
-                    type: "doughnut",
-                    data: {
-                        labels: [
-                            "Pendientes",
-                            "Aceptadas",
-                            "Rechazadas",
-                            "Completadas",
-                        ],
-                        datasets: [
-                            {
-                                data: [
-                                    stats.pending,
-                                    stats.accepted,
-                                    stats.rejected,
-                                    stats.completed,
-                                ],
-                                backgroundColor: [
-                                    "#facc15",
-                                    "#39ff14",
-                                    "#ff4444",
-                                    "#00f3ff",
-                                ],
-                                borderWidth: 0,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: "bottom",
-                                labels: { color: "#a0a0a0" },
+                // Status Chart
+                const ctxStatus = document.getElementById(
+                    "statusChart",
+                ) as HTMLCanvasElement;
+                if (ctxStatus) {
+                    if (statusChart) statusChart.destroy();
+                    statusChart = new Chart(ctxStatus, {
+                        type: "doughnut",
+                        data: {
+                            labels: ["Pendientes", "Aceptadas", "Rechazadas"],
+                            datasets: [
+                                {
+                                    data: [
+                                        stats.pending,
+                                        stats.accepted,
+                                        stats.rejected,
+                                    ],
+                                    backgroundColor: [
+                                        "#facc15",
+                                        "#39ff14",
+                                        "#ff4444",
+                                    ],
+                                    borderWidth: 0,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false, // Allow resizing via CSS
+                            plugins: {
+                                legend: {
+                                    position: "bottom",
+                                    labels: { color: "#a0a0a0" },
+                                },
                             },
                         },
-                    },
-                });
-            }
+                    });
+                }
 
-            // Modality Chart
-            const ctxModality = document.getElementById(
-                "modalityChart",
-            ) as HTMLCanvasElement;
-            if (ctxModality) {
-                if (modalityChart) modalityChart.destroy();
-                modalityChart = new Chart(ctxModality, {
-                    type: "pie",
-                    data: {
-                        labels: ["Virtual", "Presencial"],
-                        datasets: [
-                            {
-                                data: [stats.virtual, stats.presencial],
-                                backgroundColor: ["#00f3ff", "#facc15"],
-                                borderWidth: 0,
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: "bottom",
-                                labels: { color: "#a0a0a0" },
+                // Modality Chart
+                const ctxModality = document.getElementById(
+                    "modalityChart",
+                ) as HTMLCanvasElement;
+                if (ctxModality) {
+                    if (modalityChart) modalityChart.destroy();
+                    modalityChart = new Chart(ctxModality, {
+                        type: "pie",
+                        data: {
+                            labels: ["Virtual", "Presencial"],
+                            datasets: [
+                                {
+                                    data: [stats.virtual, stats.presencial],
+                                    backgroundColor: ["#00f3ff", "#bd00ff"],
+                                    borderWidth: 0,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false, // Allow resizing via CSS
+                            plugins: {
+                                legend: {
+                                    position: "bottom",
+                                    labels: { color: "#a0a0a0" },
+                                },
                             },
                         },
-                    },
-                });
+                    });
+                }
+
+                // Export Functions
+                (window as any).generatePDF = async () => {
+                    const { jsPDF } = await import("jspdf");
+                    const autoTableModule = await import("jspdf-autotable");
+                    const autoTable = autoTableModule.default;
+
+                    const doc = new jsPDF();
+                    // Register autoTable plugin
+                    autoTable(doc, {
+                        head: [],
+                        body: [],
+                    });
+                    // Note: The above might be needed to init, or we just call autoTable(doc, options) directly if supported by the version.
+                    // Actually, usually autoTable(doc, options) is the way for the functional import.
+
+                    const logoUrl = "/favicon.svg";
+
+                    // Fetch Advisories first to debug
+                    const { getAdvisoriesByProgrammer } =
+                        await import("../../lib/services/advisoryService");
+                    const advisories = await getAdvisoriesByProgrammer(
+                        parseInt(user.id),
+                    );
+                    console.log("PDF Advisories Data:", advisories);
+
+                    // Header
+                    doc.setFontSize(22);
+                    doc.setTextColor(57, 255, 20); // Neon Green
+                    doc.text("CIBERPORTFOLIO", 105, 20, { align: "center" });
+
+                    doc.setFontSize(16);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text("REPORTE DE RENDIMIENTO", 105, 30, {
+                        align: "center",
+                    });
+
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(
+                        `Generado el: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+                        105,
+                        38,
+                        { align: "center" },
+                    );
+
+                    // Stats Summary
+                    doc.setFontSize(14);
+                    doc.setTextColor(0, 150, 0); // Approx Green
+                    doc.text("RESUMEN DE PROGRESO", 14, 50);
+
+                    const summaryData = [
+                        ["Total Asesorías", stats.total.toString()],
+                        ["Pendientes", stats.pending.toString()],
+                        ["Aceptadas", stats.accepted.toString()],
+                        ["Rechazadas", stats.rejected.toString()],
+                        ["Virtual", stats.virtual.toString()],
+                        ["Presencial", stats.presencial.toString()],
+                    ];
+
+                    autoTable(doc, {
+                        startY: 55,
+                        head: [["Métrica", "Cantidad"]],
+                        body: summaryData,
+                        theme: "striped",
+                        headStyles: {
+                            fillColor: [0, 0, 0],
+                            textColor: [57, 255, 20],
+                        },
+                        styles: { fontSize: 10 },
+                    });
+
+                    // Advisories Detail
+                    doc.setFontSize(14);
+                    doc.setTextColor(0, 150, 0);
+                    const finalY = (doc as any).lastAutoTable.finalY || 55;
+                    doc.text("DETALLE DE ASESORÍAS", 14, finalY + 15);
+
+                    // Map CORRECT fields based on Interface
+                    const tableData = advisories.map((a: any) => [
+                        a.date,
+                        a.time,
+                        a.userName || "Usuario", // Changed from userValues
+                        a.message || "Sin mensaje", // Changed from topic
+                        a.modality,
+                        a.status,
+                    ]);
+
+                    autoTable(doc, {
+                        startY: finalY + 20,
+                        head: [
+                            [
+                                "Fecha",
+                                "Hora",
+                                "Usuario",
+                                "Mensaje",
+                                "Modalidad",
+                                "Estado",
+                            ],
+                        ],
+                        body: tableData,
+                        theme: "striped",
+                        headStyles: {
+                            fillColor: [0, 0, 0],
+                            textColor: [57, 255, 20],
+                        },
+                        styles: { fontSize: 9 },
+                    });
+
+                    // Footer
+                    const pageCount = (doc as any).internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8);
+                        doc.setTextColor(150, 150, 150);
+                        doc.text(`Página ${i} de ${pageCount}`, 195, 290, {
+                            align: "right",
+                        });
+                    }
+
+                    doc.save("reporte_rendimiento_ciberportfolio.pdf");
+                };
+
+                (window as any).generateExcel = async () => {
+                    const XLSX = await import("xlsx");
+                    const { getAdvisoriesByProgrammer } =
+                        await import("../../lib/services/advisoryService");
+                    const advisories = await getAdvisoriesByProgrammer(
+                        parseInt(user.id),
+                    );
+                    console.log("Excel Advisories Data:", advisories);
+
+                    // Format data for Excel - CORRECT MAPPING
+                    const data = advisories.map((a: any) => ({
+                        Fecha: a.date,
+                        Hora: a.time,
+                        Usuario: a.userName || "Usuario", // Corrected
+                        "Mensaje Inicial": a.message || "-", // Corrected
+                        Modalidad: a.modality,
+                        Estado: a.status,
+                        "Respuesta Programador": a.responseMessage || "-",
+                    }));
+
+                    const worksheet = XLSX.utils.json_to_sheet(data);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(
+                        workbook,
+                        worksheet,
+                        "Asesorías",
+                    );
+
+                    // Column widths
+                    const wscols = [{ wch: 30 }];
+                    worksheet["!cols"] = wscols;
+
+                    XLSX.writeFile(
+                        workbook,
+                        "reporte_asesorias_ciberportfolio.xlsx",
+                    );
+                };
+            } catch (error) {
+                console.error("Error loading stats:", error);
             }
-        } catch (error) {
-            console.error("Error loading stats:", error);
         }
-    }
 
-    // Schedule Management
-    async function loadSchedules() {
-        const listContainer = document.getElementById("schedule-list");
-        if (!listContainer) return;
+        // Schedule Management
+        async function loadSchedules() {
+            const listContainer = document.getElementById("schedule-list");
+            if (!listContainer) return;
 
-        try {
-            const { getAllSchedules } =
-                await import("../../lib/services/scheduleService");
-            const user = JSON.parse(localStorage.getItem("ciber_user") || "{}");
-            const schedules = await getAllSchedules();
+            try {
+                const { getAllSchedules } =
+                    await import("../../lib/services/scheduleService");
+                const user = JSON.parse(
+                    localStorage.getItem("ciber_user") || "{}",
+                );
+                const schedules = await getAllSchedules();
 
-            // Filter by current programmer
-            const mySchedules = schedules.filter(
-                (s: any) => s.programmerId === parseInt(user.id),
-            );
+                // Filter by current programmer
+                const mySchedules = schedules.filter(
+                    (s: any) => s.programmerId === parseInt(user.id),
+                );
 
-            listContainer.innerHTML = mySchedules
-                .map(
-                    (s: any) => `
+                listContainer.innerHTML = mySchedules
+                    .map(
+                        (s: any) => `
                 <div class="schedule-card">
                     <button class="delete-schedule-btn" onclick="window.deleteScheduleItem(${s.id})">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
@@ -922,788 +1272,1126 @@ import Layout from "../../layouts/Layout.astro";
                     </div>
                 </div>
             `,
-                )
-                .join("");
+                    )
+                    .join("");
 
-            if (mySchedules.length === 0) {
-                listContainer.innerHTML =
-                    '<p class="no-data">No tienes horarios registrados.</p>';
-            }
-        } catch (error) {
-            console.error("Error loading schedules:", error);
-        }
-    }
-
-    // Expose deleteScheduleItem to window
-    (window as any).deleteScheduleItem = async (id: number) => {
-        if (confirm("¿Seguro que quieres eliminar este horario?")) {
-            try {
-                const { deleteSchedule } =
-                    await import("../../lib/services/scheduleService");
-                await deleteSchedule(id);
-                loadSchedules();
+                if (mySchedules.length === 0) {
+                    listContainer.innerHTML =
+                        '<p class="no-data">No tienes horarios registrados.</p>';
+                }
             } catch (error) {
-                alert("Error al eliminar horario");
+                console.error("Error loading schedules:", error);
             }
         }
-    };
 
-    // Add Schedule Button Handler
-    const addScheduleBtn = document.getElementById("add-schedule-btn");
-    if (addScheduleBtn) {
-        addScheduleBtn.addEventListener("click", () => {
-            // Re-use current modal or create a new one? Let's implement a simple prompt for now
-            // or create a dedicated modal for schedules if user wants more complexity
-            const date = prompt(
-                "Fecha (YYYY-MM-DD):",
-                new Date().toISOString().split("T")[0],
-            );
-            const time = prompt("Hora (HH:mm):", "10:00");
-            const modality = prompt(
-                "Modalidad (VIRTUAL o PRESENCIAL):",
-                "VIRTUAL",
-            );
-
-            if (date && time && modality) {
-                createScheduleItem(date, time, modality);
+        // Expose deleteScheduleItem to window
+        (window as any).deleteScheduleItem = async (id: number) => {
+            if (confirm("¿Seguro que quieres eliminar este horario?")) {
+                try {
+                    const { deleteSchedule } =
+                        await import("../../lib/services/scheduleService");
+                    await deleteSchedule(id);
+                    loadSchedules();
+                } catch (error) {
+                    alert("Error al eliminar horario");
+                }
             }
-        });
-    }
+        };
 
-    async function createScheduleItem(
-        date: string,
-        time: string,
-        modality: string,
-    ) {
-        try {
-            const { createSchedule } =
-                await import("../../lib/services/scheduleService");
-            const user = JSON.parse(localStorage.getItem("ciber_user") || "{}");
+        // Schedule Modal Logic
+        const scheduleModal = document.getElementById("schedule-modal");
+        const openScheduleBtn = document.getElementById("open-schedule-modal");
+        const closeScheduleBtn = document.getElementById(
+            "close-schedule-modal",
+        );
+        const scheduleForm = document.getElementById("schedule-form");
 
-            await createSchedule({
-                programmerId: parseInt(user.id),
-                date,
-                time,
-                modality: modality.toUpperCase() as any,
+        if (openScheduleBtn) {
+            openScheduleBtn.addEventListener("click", () => {
+                scheduleModal?.classList.remove("hidden");
+                setTimeout(() => scheduleModal?.classList.add("active"), 10);
             });
-
-            alert("✅ Horario creado correctamente");
-            loadSchedules();
-        } catch (error: any) {
-            alert("❌ Error: " + error.message);
-        }
-    }
-</script>
-
-<style>
-    /* ... (Keeping previous container styles but fixing specific components) ... */
-    .dashboard-container {
-        padding: 6rem 2rem 2rem;
-        max-width: 1200px;
-        margin: 0 auto;
-        min-height: 100vh;
-    }
-
-    .dashboard-header {
-        text-align: center;
-        margin-bottom: 3rem;
-    }
-
-    .dashboard-header h1 {
-        font-size: 3rem;
-        color: var(--text-main);
-        letter-spacing: 4px;
-        text-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
-    }
-
-    .subtitle {
-        color: var(--cyber-purple);
-        letter-spacing: 2px;
-        font-size: 1.2rem;
-    }
-
-    .dashboard-tabs {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .tab-btn {
-        background: rgba(0, 0, 0, 0.5);
-        border: 1px solid var(--text-dim);
-        color: var(--text-dim);
-        padding: 0.8rem 2rem;
-        font-family: var(--font-heading);
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 1rem;
-        letter-spacing: 1px;
-    }
-
-    .tab-btn.active {
-        border-color: var(--neon-green);
-        color: var(--neon-green);
-        background: rgba(57, 255, 20, 0.1);
-        box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
-    }
-
-    .view-section {
-        background: rgba(10, 15, 12, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
-        padding: 2.5rem;
-        border-radius: 12px;
-        min-height: 400px;
-        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .view-section.hidden {
-        display: none;
-    }
-
-    .view-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        border-bottom: 1px solid var(--glass-border);
-        padding-bottom: 1rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-    }
-
-    .filter-group {
-        display: flex;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 4px;
-        padding: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .filter-btn {
-        background: transparent;
-        border: none;
-        color: var(--text-dim);
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-        font-family: "Rajdhani", sans-serif;
-        font-weight: bold;
-        font-size: 0.9rem;
-        transition: all 0.3s;
-        border-radius: 2px;
-    }
-
-    .filter-btn:hover {
-        color: white;
-    }
-
-    .filter-btn.active {
-        background: var(--neon-green);
-        color: black;
-        box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
-    }
-
-    .view-header h2 {
-        color: var(--text-main);
-        margin: 0;
-    }
-
-    /* Cyber Button Styles */
-    .cyber-button {
-        background: var(--neon-green);
-        color: #000;
-        border: none;
-        padding: 0.8rem 2rem;
-        font-family: var(--font-heading);
-        font-weight: bold;
-        letter-spacing: 1px;
-        cursor: pointer;
-        clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-        transition: all 0.3s;
-        text-transform: uppercase;
-    }
-
-    .cyber-button:hover {
-        background: #fff;
-        box-shadow: 0 0 15px var(--neon-green);
-        transform: translateY(-2px);
-    }
-
-    .cyber-button.small {
-        padding: 0.5rem 1rem;
-        font-size: 0.8rem;
-    }
-
-    .cyber-button.outline {
-        background: transparent;
-        border: 1px solid var(--neon-green);
-        color: var(--neon-green);
-        clip-path: none;
-        border-radius: 4px;
-    }
-
-    .cyber-button.outline:hover {
-        background: var(--neon-green);
-        color: black;
-    }
-
-    /* Profile Form Styles */
-    .profile-form {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-
-    .form-section {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(57, 255, 20, 0.2);
-        padding: 2rem;
-        border-radius: 8px;
-        margin-bottom: 2rem;
-    }
-
-    .form-section h3 {
-        color: var(--neon-green);
-        font-family: var(--font-heading);
-        font-size: 1.3rem;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        letter-spacing: 2px;
-    }
-
-    .form-section .icon {
-        font-size: 1.5rem;
-    }
-
-    .row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-    }
-
-    .input-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .input-group label {
-        display: block;
-        color: var(--text-dim);
-        font-size: 0.9rem;
-        letter-spacing: 1px;
-        margin-bottom: 0.5rem;
-        font-family: var(--font-heading);
-    }
-
-    .input-group input,
-    .input-group textarea {
-        width: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: var(--text-main);
-        font-family: var(--font-body);
-        font-size: 1rem;
-        padding: 0.8rem;
-        border-radius: 4px;
-        transition: all 0.3s;
-    }
-
-    .input-group input:focus,
-    .input-group textarea:focus {
-        border-color: var(--neon-green);
-        box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
-        outline: none;
-    }
-
-    .help-text {
-        display: block;
-        margin-top: 0.5rem;
-        color: var(--text-dim);
-        font-size: 0.8rem;
-        opacity: 0.7;
-    }
-
-    .form-actions {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        margin-top: 2rem;
-    }
-
-    .success-message {
-        color: var(--neon-green);
-        font-family: var(--font-heading);
-        font-size: 1rem;
-        padding: 0.8rem 1.5rem;
-        background: rgba(57, 255, 20, 0.1);
-        border: 1px solid var(--neon-green);
-        border-radius: 4px;
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    .success-message.hidden {
-        display: none;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @media (max-width: 768px) {
-        .row {
-            grid-template-columns: 1fr;
         }
 
-        .form-section {
-            padding: 1.5rem;
+        if (closeScheduleBtn) {
+            closeScheduleBtn.addEventListener("click", () => {
+                scheduleModal?.classList.remove("active");
+                setTimeout(() => scheduleModal?.classList.add("hidden"), 300);
+            });
         }
-    }
-</style>
 
-<style is:global>
-    /* Projects Grid (Global for Dynamic JS) */
-    .projects-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 2rem;
-    }
+        if (scheduleForm) {
+            scheduleForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const date = (
+                    document.getElementById("schedule-date") as HTMLInputElement
+                ).value;
+                const time = (
+                    document.getElementById("schedule-time") as HTMLInputElement
+                ).value;
+                const modality = (
+                    document.getElementById(
+                        "schedule-modality",
+                    ) as HTMLSelectElement
+                ).value;
 
-    .db-project-card {
-        background: rgba(
-            10,
-            15,
-            12,
-            0.6
-        ); /* Translucent dark aligned with theme */
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 4px; /* Less rounded, more tech */
-        overflow: hidden;
-        transition: all 0.3s;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-    }
+                if (date && time && modality) {
+                    await createScheduleItem(date, time, modality);
+                    scheduleModal?.classList.remove("active");
+                    setTimeout(
+                        () => scheduleModal?.classList.add("hidden"),
+                        300,
+                    );
+                    (scheduleForm as HTMLFormElement).reset();
+                }
+            });
+        }
 
-    .db-project-card::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #39ff14, transparent);
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
+        async function createScheduleItem(
+            date: string,
+            time: string,
+            modality: string,
+        ) {
+            try {
+                const { createSchedule } =
+                    await import("../../lib/services/scheduleService");
+                const user = JSON.parse(
+                    localStorage.getItem("ciber_user") || "{}",
+                );
 
-    .db-project-card:hover {
-        transform: translateY(-5px);
-        border-color: #39ff14; /* Neon Green */
-        box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
-    }
+                await createSchedule({
+                    programmerId: parseInt(user.id),
+                    date,
+                    time,
+                    modality: modality.toUpperCase() as any,
+                });
 
-    .db-project-card:hover::before {
-        opacity: 1;
-    }
+                alert("✅ Horario creado correctamente");
+                loadSchedules();
+            } catch (error: any) {
+                alert("❌ Error: " + error.message);
+            }
+        }
+    </script>
 
-    .db-project-img {
-        height: 180px;
-        width: 100%;
-        background-size: cover;
-        background-position: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        filter: grayscale(40%);
-        transition: filter 0.3s;
-    }
-
-    .db-project-card:hover .db-project-img {
-        filter: grayscale(0%);
-    }
-
-    .db-project-info {
-        padding: 1.5rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        color: #e0e0e0;
-    }
-
-    .db-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.5rem;
-    }
-
-    .db-project-info h3 {
-        color: #ffffff;
-        font-family: "Orbitron", sans-serif;
-        font-size: 1.2rem;
-        letter-spacing: 1px;
-        margin: 0;
-        text-transform: uppercase;
-        text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-    }
-
-    .db-badge {
-        display: inline-block;
-        font-size: 0.7rem;
-        padding: 0.2rem 0.6rem;
-        border: 1px solid;
-        font-family: "Rajdhani", sans-serif;
-        font-weight: 600;
-        margin-top: 0.5rem;
-        margin-bottom: 1rem;
-        width: fit-content;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        clip-path: polygon(10% 0, 100% 0, 100% 80%, 90% 100%, 0 100%, 0 20%);
-    }
-
-    .db-badge.pro {
-        border-color: #00f3ff; /* Electric Blue/Celeste - PROFESIONAL */
-        color: #00f3ff;
-        background: rgba(0, 243, 255, 0.1);
-        box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
-    }
-    .db-badge.academic {
-        border-color: #bc13fe; /* Cyber Purple/Morado - ACADEMICO */
-        color: #bc13fe;
-        background: rgba(188, 19, 254, 0.1);
-        box-shadow: 0 0 5px rgba(188, 19, 254, 0.2);
-    }
-
-    .db-project-info p {
-        color: #a0a0a0;
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin-bottom: 1.5rem;
-        flex-grow: 1;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        margin-top: 0;
-        max-height: 4.5em;
-    }
-
-    .db-techs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .db-techs span {
-        font-size: 0.7rem;
-        color: #39ff14; /* Neon Green Text */
-        border: 1px solid rgba(57, 255, 20, 0.3);
-        background: rgba(5, 10, 8, 0.8);
-        padding: 0.2rem 0.6rem;
-        font-family: "Orbitron", sans-serif;
-        letter-spacing: 1px;
-    }
-
-    .db-actions {
-        display: flex;
-        gap: 0.75rem;
-        margin-top: auto;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        padding-top: 1rem;
-    }
-
-    /* Action Buttons (Restyled to Match Main Button) */
-    .action-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.6rem 1rem;
-        font-weight: 700;
-        transition: all 0.3s;
-        cursor: pointer;
-        border: none;
-        font-family: "Orbitron", sans-serif;
-        font-size: 0.85rem;
-        text-decoration: none;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-    }
-
-    .action-btn.primary {
-        background: #39ff14; /* Neon Green */
-        color: #050a08; /* Dark Text */
-        flex: 1;
-        box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
-    }
-
-    .action-btn.primary:hover {
-        background: #fff;
-        color: #39ff14;
-        box-shadow: 0 0 20px #39ff14;
-        transform: translateY(-2px);
-    }
-
-    .action-btn.icon {
-        background: transparent;
-        border: 1px solid #ff4444;
-        color: #ff4444;
-        width: 42px;
-        padding: 0;
-        clip-path: none; /* Icons can stay square/box */
-        border-radius: 4px;
-    }
-
-    .action-btn.icon:hover {
-        background: #ff4444;
-        color: white;
-        box-shadow: 0 0 10px #ff4444;
-    }
-
-    .action-btn.delete:hover {
-        background: #ef4444;
-    }
-</style>
-
-<style>
-    /* Modal Form Styles */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 3000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-    }
-
-    .modal-overlay.active {
-        opacity: 1;
-        pointer-events: auto;
-    }
-
-    .modal-overlay.hidden {
-        display: none;
-    }
-
-    .modal-content {
-        background: #0d1210;
-        border: 1px solid var(--neon-green);
-        padding: 2.5rem;
-        width: 100%;
-        max-width: 600px;
-        position: relative;
-        box-shadow: 0 0 50px rgba(57, 255, 20, 0.1);
-    }
-
-    .modal-content h2 {
-        color: var(--neon-green);
-        margin-bottom: 2rem;
-        text-align: center;
-        font-size: 1.8rem;
-    }
-
-    .close-btn {
-        position: absolute;
-        top: 1rem;
-        right: 1.5rem;
-        background: none;
-        border: none;
-        color: var(--text-dim);
-        font-size: 2rem;
-        cursor: pointer;
-        transition: 0.3s;
-    }
-
-    .close-btn:hover {
-        color: white;
-    }
-
-    .input-group label {
-        display: block;
-        color: var(--neon-green);
-        font-size: 0.8rem;
-        margin-bottom: 0.5rem;
-        letter-spacing: 1px;
-    }
-
-    .input-group input,
-    .input-group textarea,
-    .input-group select {
-        width: 100%;
-        padding: 0.8rem;
-        background: #151a18; /* Dark background ensured */
-        border: 1px solid #333;
-        color: white;
-        font-family: var(--font-body);
-        font-size: 1rem;
-        border-radius: 4px;
-        outline: none;
-        transition: 0.3s;
-    }
-
-    .input-group input:focus,
-    .input-group textarea:focus,
-    .input-group select:focus {
-        border-color: var(--neon-green);
-        box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);
-    }
-
-    .row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
-
-    .no-data {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 3rem;
-        border: 2px dashed var(--glass-border);
-        border-radius: 8px;
-        color: var(--text-dim);
-    }
-
-    /* Table Fixes */
-    .cyber-table {
-        width: 100%;
-        border-collapse: collapse;
-        color: var(--text-main);
-        font-family: "Rajdhani", sans-serif;
-    }
-
-    .cyber-table th,
-    .cyber-table td {
-        padding: 1rem;
-        text-align: left;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .cyber-table th {
-        color: var(--neon-green);
-        font-family: "Orbitron", sans-serif;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-        border-bottom: 2px solid var(--neon-green);
-    }
-
-    .cyber-table tr:hover {
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .status {
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .status.pending {
-        background: rgba(255, 255, 0, 0.1);
-        color: #facc15;
-        border: 1px solid rgba(255, 255, 0, 0.3);
-    }
-
-    .status.accepted {
-        background: rgba(57, 255, 20, 0.1);
-        color: var(--neon-green);
-        border: 1px solid rgba(57, 255, 20, 0.3);
-    }
-
-    .status.rejected {
-        background: rgba(255, 0, 0, 0.1);
-        color: #ff4444;
-        border: 1px solid rgba(255, 0, 0, 0.3);
-    }
-
-    @media (max-width: 768px) {
+    <style>
+        /* ... (Keeping previous container styles but fixing specific components) ... */
         .dashboard-container {
-            padding: 6rem 1rem 1rem;
+            padding: 6rem 2rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
         }
 
-        .dashboard-header h1 {
-            font-size: 2rem;
-        }
-
-        .dashboard-tabs {
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .tab-btn {
-            width: 100%;
-        }
-
-        .view-section {
-            padding: 1.5rem;
-        }
-
-        .header-actions {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 1rem;
-        }
-
-        .filter-group {
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
+        .dashboard-header {
+            text-align: center;
             margin-bottom: 3rem;
         }
 
-        .projects-grid {
-            grid-template-columns: 1fr;
+        .dashboard-header h1 {
+            font-size: 3rem;
+            color: var(--text-main);
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+
+        .subtitle {
+            color: var(--cyber-purple);
+            letter-spacing: 2px;
+            font-size: 1.2rem;
+        }
+
+        .dashboard-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--text-dim);
+            color: var(--text-dim);
+            padding: 0.8rem 2rem;
+            font-family: var(--font-heading);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .tab-btn.active {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+            background: rgba(57, 255, 20, 0.1);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+        }
+
+        .view-section {
+            background: rgba(10, 15, 12, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem;
+            border-radius: 12px;
+            min-height: 400px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .view-section.hidden {
+            display: none;
+        }
+
+        .view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-family: "Rajdhani", sans-serif;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            border-radius: 2px;
+        }
+
+        .filter-btn:hover {
+            color: white;
+        }
+
+        .filter-btn.active {
+            background: var(--neon-green);
+            color: black;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+
+        .view-header h2 {
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        /* Cyber Button Styles */
+        .cyber-button {
+            background: var(--neon-green);
+            color: #000;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-family: var(--font-heading);
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            clip-path: polygon(
+                10% 0,
+                100% 0,
+                100% 70%,
+                90% 100%,
+                0 100%,
+                0 30%
+            );
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .cyber-button:hover {
+            background: #fff;
+            box-shadow: 0 0 15px var(--neon-green);
+            transform: translateY(-2px);
+        }
+
+        .cyber-button.small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .cyber-button.outline {
+            background: transparent;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            clip-path: none;
+            border-radius: 4px;
+        }
+
+        .cyber-button.outline:hover {
+            background: var(--neon-green);
+            color: black;
+        }
+
+        /* Profile Form Styles */
+        .profile-form {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .form-section {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(57, 255, 20, 0.2);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            color: var(--neon-green);
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: 2px;
+        }
+
+        .form-section .icon {
+            font-size: 1.5rem;
         }
 
         .row {
-            grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
         }
 
-        .requests-table-container {
-            margin: 0 -1.5rem;
-            padding: 0 1.5rem;
-            overflow-x: auto;
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-heading);
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            padding: 0.8rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+            outline: none;
+        }
+
+        .help-text {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .success-message {
+            color: var(--neon-green);
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid var(--neon-green);
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .success-message.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Status Badges */
+        .status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status.available {
+            background: rgba(57, 255, 20, 0.1);
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+        }
+
+        .status.booked {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .status.pending {
+            background: rgba(250, 204, 21, 0.1);
+            color: #facc15;
+            border: 1px solid #facc15;
+        }
+
+        .status.accepted {
+            background: rgba(57, 255, 20, 0.1);
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+        }
+
+        .status.rejected {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .status.completed {
+            background: rgba(0, 243, 255, 0.1);
+            color: #00f3ff;
+            border: 1px solid #00f3ff;
+        }
+
+        /* Schedule List Styles */
+        .schedule-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .schedule-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+        }
+
+        .schedule-card:hover {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .delete-schedule-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .delete-schedule-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .schedule-info h4 {
+            color: white;
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+        }
+
+        .schedule-info p {
+            color: var(--neon-green);
+            font-size: 1.5rem;
+            font-family: "Orbitron", sans-serif;
+            margin: 0 0 1rem 0;
+        }
+
+        .modality-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            border: 1px solid;
+        }
+
+        .modality-badge.virtual {
+            color: #00f3ff;
+            border-color: #00f3ff;
+        }
+
+        .modality-badge.presencial {
+            color: #bd00ff;
+            border-color: #bd00ff;
+        }
+
+        /* Stats Chart Sizing */
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 300px; /* Fixed width for consistent smaller charts */
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-card canvas {
+            max-height: 250px !important;
+        }
+
+        .chart-label {
+            margin-top: 1rem;
+            color: var(--text-dim);
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+        }
+
+        /* Mini Stats Styling */
+        .mini-stats {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            width: 100%;
+        }
+
+        .mini-stat-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            min-width: 140px;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mini-stat-card:hover {
+            border-color: var(--neon-green);
+            transform: translateY(-5px);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.1);
+        }
+
+        .mini-stat-card h4 {
+            font-size: 2.5rem;
+            font-family: "Orbitron", sans-serif;
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .mini-stat-card p {
+            color: var(--text-dim);
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            margin: 0.5rem 0 0 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Export Section */
+        .export-section {
+            margin-top: 3rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            text-align: center;
+        }
+
+        .export-section h3 {
+            color: var(--neon-green);
+            font-family: "Orbitron", sans-serif;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .export-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-family: "Orbitron", sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .export-btn .icon {
+            font-size: 1.2rem;
+        }
+
+        .export-btn.pdf {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .export-btn.pdf:hover {
+            background: #ff4444;
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .export-btn.excel {
+            background: rgba(57, 255, 20, 0.1);
+            color: #39ff14;
+            border: 1px solid #39ff14;
+        }
+
+        .export-btn.excel:hover {
+            background: #39ff14;
+            color: black;
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Cyber Input for Modal */
+        .cyber-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-family: "Rajdhani", sans-serif;
+            font-size: 1rem;
+        }
+
+        .cyber-input option {
+            background: black;
+            color: white;
+        }
+    </style>
+
+    <style is:global>
+        /* Projects Grid (Global for Dynamic JS) */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .db-project-card {
+            background: rgba(
+                10,
+                15,
+                12,
+                0.6
+            ); /* Translucent dark aligned with theme */
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px; /* Less rounded, more tech */
+            overflow: hidden;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .db-project-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                #39ff14,
+                transparent
+            );
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .db-project-card:hover {
+            transform: translateY(-5px);
+            border-color: #39ff14; /* Neon Green */
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+        }
+
+        .db-project-card:hover::before {
+            opacity: 1;
+        }
+
+        .db-project-img {
+            height: 180px;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            filter: grayscale(40%);
+            transition: filter 0.3s;
+        }
+
+        .db-project-card:hover .db-project-img {
+            filter: grayscale(0%);
+        }
+
+        .db-project-info {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            color: #e0e0e0;
+        }
+
+        .db-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .db-project-info h3 {
+            color: #ffffff;
+            font-family: "Orbitron", sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            margin: 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        .db-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border: 1px solid;
+            font-family: "Rajdhani", sans-serif;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            width: fit-content;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            clip-path: polygon(
+                10% 0,
+                100% 0,
+                100% 80%,
+                90% 100%,
+                0 100%,
+                0 20%
+            );
+        }
+
+        .db-badge.pro {
+            border-color: #00f3ff; /* Electric Blue/Celeste - PROFESIONAL */
+            color: #00f3ff;
+            background: rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+        }
+        .db-badge.academic {
+            border-color: #bc13fe; /* Cyber Purple/Morado - ACADEMICO */
+            color: #bc13fe;
+            background: rgba(188, 19, 254, 0.1);
+            box-shadow: 0 0 5px rgba(188, 19, 254, 0.2);
+        }
+
+        .db-project-info p {
+            color: #a0a0a0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-top: 0;
+            max-height: 4.5em;
+        }
+
+        .db-techs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .db-techs span {
+            font-size: 0.7rem;
+            color: #39ff14; /* Neon Green Text */
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            background: rgba(5, 10, 8, 0.8);
+            padding: 0.2rem 0.6rem;
+            font-family: "Orbitron", sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .db-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+        }
+
+        /* Action Buttons (Restyled to Match Main Button) */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 1rem;
+            font-weight: 700;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-family: "Orbitron", sans-serif;
+            font-size: 0.85rem;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            clip-path: polygon(
+                10% 0,
+                100% 0,
+                100% 70%,
+                90% 100%,
+                0 100%,
+                0 30%
+            );
+        }
+
+        .action-btn.primary {
+            background: #39ff14; /* Neon Green */
+            color: #050a08; /* Dark Text */
+            flex: 1;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        }
+
+        .action-btn.primary:hover {
+            background: #fff;
+            color: #39ff14;
+            box-shadow: 0 0 20px #39ff14;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.icon {
+            background: transparent;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            width: 42px;
+            padding: 0;
+            clip-path: none; /* Icons can stay square/box */
+            border-radius: 4px;
+        }
+
+        .action-btn.icon:hover {
+            background: #ff4444;
+            color: white;
+            box-shadow: 0 0 10px #ff4444;
+        }
+
+        .action-btn.delete:hover {
+            background: #ef4444;
+        }
+    </style>
+
+    <style>
+        /* Modal Form Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 3000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: #0d1210;
+            border: 1px solid var(--neon-green);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            box-shadow: 0 0 50px rgba(57, 255, 20, 0.1);
+        }
+
+        .modal-content h2 {
+            color: var(--neon-green);
+            margin-bottom: 2rem;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--neon-green);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 0.8rem;
+            background: #151a18; /* Dark background ensured */
+            border: 1px solid #333;
+            color: white;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            border-radius: 4px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.1);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .no-data {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            border: 2px dashed var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-dim);
+        }
+
+        /* Table Fixes */
+        .cyber-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-main);
+            font-family: "Rajdhani", sans-serif;
         }
 
         .cyber-table th,
         .cyber-table td {
-            white-space: nowrap;
-            padding: 0.8rem;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .modal-content {
-            width: 95%;
-            padding: 1.5rem;
-            margin: 1rem;
+        .cyber-table th {
+            color: var(--neon-green);
+            font-family: "Orbitron", sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            border-bottom: 2px solid var(--neon-green);
         }
-    }
-</style>
+
+        .cyber-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status.pending {
+            background: rgba(255, 255, 0, 0.1);
+            color: #facc15;
+            border: 1px solid rgba(255, 255, 0, 0.3);
+        }
+
+        .status.accepted {
+            background: rgba(57, 255, 20, 0.1);
+            color: var(--neon-green);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+        }
+
+        .status.rejected {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff4444;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 6rem 1rem 1rem;
+            }
+
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard-tabs {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .view-section {
+                padding: 1.5rem;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .filter-group {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                margin-bottom: 3rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .row {
+                grid-template-columns: 1fr;
+            }
+
+            .requests-table-container {
+                margin: 0 -1.5rem;
+                padding: 0 1.5rem;
+                overflow-x: auto;
+            }
+
+            .cyber-table th,
+            .cyber-table td {
+                white-space: nowrap;
+                padding: 0.8rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+        }
+    </style>
+</Layout>

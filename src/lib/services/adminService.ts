@@ -52,3 +52,14 @@ export async function deleteUser(id: string): Promise<void> {
         throw new Error("Error al eliminar usuario");
     }
 }
+
+export async function getAllAdvisories(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/api/advisories/all`, {
+        headers: getAuthHeader(),
+    });
+
+    if (!response.ok) {
+        throw new Error("Error al obtener todas las asesorías");
+    }
+    return response.json();
+}

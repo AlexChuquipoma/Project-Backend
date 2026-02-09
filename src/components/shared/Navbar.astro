@@ -410,10 +410,13 @@
                 ? `<span class="notification-dot"></span>`
                 : "";
 
-            const requestsLink = `<a href="/programmer/requests" class="dropdown-item">
-                <span class="icon">📨</span> Mis Solicitudes 
-                ${hasUpdates ? '<span class="badge-mini">!</span>' : ""}
-            </a>`;
+            let requestsLink = "";
+            if (user.role !== "programmer" && user.role !== "admin") {
+                requestsLink = `<a href="/programmer/requests" class="dropdown-item">
+                    <span class="icon">📨</span> Mis Solicitudes 
+                    ${hasUpdates ? '<span class="badge-mini">!</span>' : ""}
+                </a>`;
+            }
 
             authItem.innerHTML = `
                 <div class="profile-dropdown">

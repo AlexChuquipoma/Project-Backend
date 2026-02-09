@@ -2,42 +2,120 @@
 import Layout from "../../layouts/Layout.astro";
 ---
 
-<Layout title="Mis Solicitudes | CiberPortfolio">
-    <div class="requests-container">
+<Layout title="Mi Dashboard | CiberPortfolio">
+    <div class="dashboard-container">
         <header class="page-header">
-            <h1 class="glitch" data-text="MIS SOLICITUDES">MIS SOLICITUDES</h1>
-            <p class="subtitle">ESTADO DE TUS CONEXIONES</p>
+            <h1 class="glitch" data-text="MI DASHBOARD">MI DASHBOARD</h1>
+            <p class="subtitle">GESTIÓN DE TUS ASESORÍAS</p>
         </header>
 
-        <div class="glass-panel table-container">
-            <table class="cyber-table">
-                <thead>
-                    <tr>
-                        <th>FECHA</th>
-                        <th>PROGRAMADOR</th>
-                        <th>NOTA</th>
-                        <th>ESTADO</th>
-                    </tr>
-                </thead>
-                <tbody id="user-requests-body">
-                    <!-- Injected via JS -->
-                </tbody>
-            </table>
-            <div id="no-data-msg" class="no-data hidden">
-                No has realizado ninguna solicitud de enlace.
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="requests">
+                <span class="icon">📨</span> SOLICITUDES
+            </button>
+            <button class="tab-btn" data-tab="stats">
+                <span class="icon">📊</span> ESTADÍSTICAS
+            </button>
+        </div>
+
+        <!-- Requests View -->
+        <div id="requests-view" class="view-section active">
+            <div class="glass-panel table-container">
+                <div class="panel-header">
+                    <h2>HISTORIAL DE SOLICITUDES</h2>
+                </div>
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>FECHA</th>
+                            <th>PROGRAMADOR</th>
+                            <th>NOTA</th>
+                            <th>RESPUESTA</th>
+                            <th>ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-requests-body">
+                        <!-- Injected via JS -->
+                    </tbody>
+                </table>
+                <div id="no-data-msg" class="no-data hidden">
+                    No has realizado ninguna solicitud de enlace.
+                </div>
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 2rem;">
+        <!-- Stats View -->
+        <div id="stats-view" class="view-section hidden">
+            <div class="stats-grid">
+                <!-- KPI Cards -->
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon">📝</div>
+                    <div class="kpi-content">
+                        <h3>TOTAL</h3>
+                        <span id="stat-total" class="kpi-value">0</span>
+                    </div>
+                </div>
+                <div
+                    class="kpi-card glass-panel"
+                    style="border-color: #facc15;"
+                >
+                    <div class="kpi-icon" style="color: #facc15;">⏳</div>
+                    <div class="kpi-content">
+                        <h3>PENDIENTES</h3>
+                        <span id="stat-pending" class="kpi-value">0</span>
+                    </div>
+                </div>
+                <div
+                    class="kpi-card glass-panel"
+                    style="border-color: var(--neon-green);"
+                >
+                    <div class="kpi-icon" style="color: var(--neon-green);">
+                        ✅
+                    </div>
+                    <div class="kpi-content">
+                        <h3>ACEPTADAS</h3>
+                        <span id="stat-accepted" class="kpi-value">0</span>
+                    </div>
+                </div>
+                <div
+                    class="kpi-card glass-panel"
+                    style="border-color: #ff4444;"
+                >
+                    <div class="kpi-icon" style="color: #ff4444;">❌</div>
+                    <div class="kpi-content">
+                        <h3>RECHAZADAS</h3>
+                        <span id="stat-rejected" class="kpi-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-container glass-panel">
+                    <h3>ESTADO DE SOLICITUDES</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container glass-panel">
+                    <h3>MODALIDAD PREFERIDA</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="modalityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem;">
             <a href="/" class="cyber-button small">VOLVER AL INICIO</a>
         </div>
     </div>
 </Layout>
 
 <style>
-    .requests-container {
+    .dashboard-container {
         padding: 8rem 2rem 4rem;
-        max-width: 1000px;
+        max-width: 1200px;
         margin: 0 auto;
         min-height: 100vh;
     }
@@ -60,6 +138,62 @@ import Layout from "../../layouts/Layout.astro";
         font-size: 1rem;
     }
 
+    /* Tabs Navigation */
+    .tabs-nav {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--glass-border);
+        color: var(--text-dim);
+        padding: 1rem 2rem;
+        font-family: "Orbitron", sans-serif;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        clip-path: polygon(10% 0, 100% 0, 100% 80%, 90% 100%, 0 100%, 0 20%);
+    }
+
+    .tab-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+
+    .tab-btn.active {
+        background: rgba(57, 255, 20, 0.1);
+        border-color: var(--neon-green);
+        color: var(--neon-green);
+        text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+    }
+
+    /* View Sections */
+    .view-section {
+        display: none;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .view-section.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .glass-panel {
         background: rgba(10, 15, 12, 0.6);
         backdrop-filter: blur(10px);
@@ -69,6 +203,17 @@ import Layout from "../../layouts/Layout.astro";
         box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
     }
 
+    .panel-header h2 {
+        color: #fff;
+        font-family: "Orbitron", sans-serif;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(57, 255, 20, 0.3);
+        padding-bottom: 0.5rem;
+        display: inline-block;
+    }
+
+    /* Table Styles */
     .cyber-table {
         width: 100%;
         border-collapse: collapse;
@@ -110,18 +255,88 @@ import Layout from "../../layouts/Layout.astro";
         color: #facc15;
         border: 1px solid rgba(255, 255, 0, 0.3);
     }
-
     .status.accepted {
         background: rgba(57, 255, 20, 0.1);
         color: var(--neon-green);
         border: 1px solid rgba(57, 255, 20, 0.3);
         box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
     }
-
     .status.rejected {
         background: rgba(255, 0, 0, 0.1);
         color: #ff4444;
         border: 1px solid rgba(255, 0, 0, 0.3);
+    }
+    .status.completed {
+        background: rgba(0, 191, 255, 0.1);
+        color: #00bfff;
+        border: 1px solid rgba(0, 191, 255, 0.3);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: transform 0.3s;
+        border-left: 4px solid var(--glass-border);
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .kpi-icon {
+        font-size: 2.5rem;
+        color: var(--text-dim);
+    }
+
+    .kpi-content h3 {
+        color: var(--text-dim);
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        margin-bottom: 0.2rem;
+        font-family: "Orbitron", sans-serif;
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #fff;
+        font-family: "Rajdhani", sans-serif;
+    }
+
+    /* Charts */
+    .charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    .chart-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .chart-container h3 {
+        color: var(--neon-green);
+        font-family: "Orbitron", sans-serif;
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+    }
+
+    .chart-wrapper {
+        width: 100%;
+        height: 300px;
+        position: relative;
     }
 
     .no-data {
@@ -129,7 +344,6 @@ import Layout from "../../layouts/Layout.astro";
         padding: 2rem;
         color: var(--text-dim);
     }
-
     .hidden {
         display: none;
     }
@@ -144,19 +358,69 @@ import Layout from "../../layouts/Layout.astro";
         font-family: "Orbitron", sans-serif;
         transition: all 0.3s;
     }
-
     .cyber-button.small:hover {
         background: var(--neon-green);
         color: black;
         box-shadow: 0 0 20px var(--neon-green);
     }
+
+    @media (max-width: 768px) {
+        .charts-row {
+            grid-template-columns: 1fr;
+        }
+        .tabs-nav {
+            flex-direction: column;
+        }
+    }
 </style>
 
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"
+    is:inline></script>
+
 <script>
+    import {
+        getAdvisoriesByUser,
+        getUserStats,
+    } from "../../lib/services/advisoryService";
+
+    declare const Chart: any;
+
     const tableBody = document.getElementById("user-requests-body");
     const noDataMsg = document.getElementById("no-data-msg");
+    let chartsInitialized = false;
 
-    function loadUserRequests() {
+    // Tab Logic
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const viewSections = document.querySelectorAll(".view-section");
+
+    tabBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const tabId = (btn as HTMLElement).dataset.tab;
+
+            // Switch Tabs
+            tabBtns.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            // Switch Views
+            viewSections.forEach((section) => {
+                section.classList.remove("active");
+                section.classList.add("hidden");
+                if (section.id === `${tabId}-view`) {
+                    section.classList.remove("hidden");
+                    section.classList.add("active");
+                }
+            });
+
+            // Init Charts if switching to stats
+            if (tabId === "stats" && !chartsInitialized) {
+                initCharts();
+                chartsInitialized = true;
+            }
+        });
+    });
+
+    async function loadUserRequests() {
         const userStr = localStorage.getItem("ciber_user");
         if (!userStr) {
             window.location.href = "/auth/login";
@@ -164,48 +428,167 @@ import Layout from "../../layouts/Layout.astro";
         }
 
         const user = JSON.parse(userStr);
-        const allRequests = JSON.parse(
-            localStorage.getItem("ciber_requests") || "[]",
-        );
 
-        // Filter requests for this user
-        const myRequests = allRequests.filter(
-            (r: any) => r.userEmail === user.email,
-        );
+        try {
+            console.log("Fetching user requests for ID:", user.id);
+            const myRequests = await getAdvisoriesByUser(parseInt(user.id));
 
-        if (myRequests.length === 0) {
-            if (noDataMsg) noDataMsg.classList.remove("hidden");
-            return;
-        }
+            if (myRequests.length === 0) {
+                if (noDataMsg) noDataMsg.classList.remove("hidden");
+            } else {
+                if (tableBody) {
+                    tableBody.innerHTML = myRequests
+                        .sort(
+                            (a: any, b: any) =>
+                                new Date(b.date).getTime() -
+                                new Date(a.date).getTime(),
+                        )
+                        .map(
+                            (r: any) => `
+                            <tr>
+                                <td>
+                                    <div>${r.date}</div>
+                                    <small style="color:var(--text-dim)">${r.time}</small>
+                                </td>
+                                <td>${r.programmerName || "Programador"}</td>
+                                <td style="max-width: 200px; overflow:hidden; text-overflow:ellipsis;">${r.message}</td>
+                                <td style="max-width: 200px; overflow:hidden; text-overflow:ellipsis; color:var(--neon-green)">${r.responseMessage || "-"}</td>
+                                <td><span class="status ${r.status.toLowerCase()}">${r.status}</span></td>
+                            </tr>
+                        `,
+                        )
+                        .join("");
+                }
+            }
 
-        if (tableBody) {
-            tableBody.innerHTML = myRequests
-                .sort(
-                    (a: any, b: any) =>
-                        new Date(b.timestamp).getTime() -
-                        new Date(a.timestamp).getTime(),
-                )
-                .map(
-                    (r: any) => `
-                    <tr>
-                        <td>${new Date(r.timestamp).toLocaleDateString()}</td>
-                        <td>${r.programmer}</td>
-                        <td>${r.notes || "-"}</td>
-                        <td>
-                            <span class="status ${r.status}">
-                                ${r.status === "pending" ? "PENDIENTE" : r.status === "accepted" ? "ACEPTADO" : "RECHAZADO"}
-                            </span>
-                        </td>
-                    </tr>
-                `,
-                )
-                .join("");
+            // Load Stats Data
+            loadStats(parseInt(user.id));
+        } catch (e) {
+            console.error(e);
+            if (noDataMsg) {
+                noDataMsg.textContent = "Error al cargar datos.";
+                noDataMsg.classList.remove("hidden");
+            }
         }
     }
 
-    document.addEventListener("astro:page-load", loadUserRequests);
-    // Since Astro viewtransitions might not be on, run on DOMContentLoaded too
-    document.addEventListener("DOMContentLoaded", loadUserRequests);
+    async function loadStats(userId: number) {
+        try {
+            const stats = await getUserStats(userId);
+
+            // Update KPIs
+            if (document.getElementById("stat-total"))
+                document.getElementById("stat-total")!.innerText =
+                    stats.total.toString();
+            if (document.getElementById("stat-pending"))
+                document.getElementById("stat-pending")!.innerText =
+                    stats.pending.toString();
+            if (document.getElementById("stat-accepted"))
+                document.getElementById("stat-accepted")!.innerText =
+                    stats.accepted.toString();
+            if (document.getElementById("stat-rejected"))
+                document.getElementById("stat-rejected")!.innerText =
+                    stats.rejected.toString();
+
+            // Store for chart init
+            (window as any).userStatsData = stats;
+
+            if (chartsInitialized) {
+                initCharts();
+            }
+        } catch (error) {
+            console.error("Error loading stats:", error);
+        }
+    }
+
+    function initCharts() {
+        const stats = (window as any).userStatsData;
+        if (!stats || typeof Chart === "undefined") return;
+
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: { color: "#fff", font: { family: "Rajdhani" } },
+                },
+            },
+        };
+
+        // Status Chart
+        const ctxStatus = document.getElementById(
+            "statusChart",
+        ) as HTMLCanvasElement;
+        if (ctxStatus) {
+            new Chart(ctxStatus, {
+                type: "doughnut",
+                data: {
+                    labels: [
+                        "Pendientes",
+                        "Aceptadas",
+                        "Rechazadas",
+                        "Completadas",
+                    ],
+                    datasets: [
+                        {
+                            data: [
+                                stats.pending,
+                                stats.accepted,
+                                stats.rejected,
+                                stats.completed,
+                            ],
+                            backgroundColor: [
+                                "#facc15",
+                                "#39ff14",
+                                "#ff4444",
+                                "#00bfff",
+                            ],
+                            borderWidth: 0,
+                        },
+                    ],
+                },
+                options: commonOptions,
+            });
+        }
+
+        // Modality Chart
+        const ctxModality = document.getElementById(
+            "modalityChart",
+        ) as HTMLCanvasElement;
+        if (ctxModality) {
+            new Chart(ctxModality, {
+                type: "bar",
+                data: {
+                    labels: ["Virtual", "Presencial"],
+                    datasets: [
+                        {
+                            label: "Cantidad",
+                            data: [stats.virtual, stats.presencial],
+                            backgroundColor: ["#b300ff", "#00d4ff"],
+                            borderRadius: 5,
+                        },
+                    ],
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, color: "#aaa" },
+                            grid: { color: "rgba(255,255,255,0.1)" },
+                        },
+                        x: {
+                            ticks: { color: "#fff" },
+                            grid: { display: false },
+                        },
+                    },
+                },
+            });
+        }
+    }
+
+    // Run on init
+    loadUserRequests();
 </script>
-
-

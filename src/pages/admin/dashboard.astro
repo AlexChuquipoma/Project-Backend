@@ -14,7 +14,7 @@ import Layout from "../../layouts/Layout.astro";
         <div class="dashboard-tabs">
             <button class="tab-btn active" data-tab="users">USUARIOS</button>
             <button class="tab-btn" data-tab="schedules">HORARIOS</button>
-            <button class="tab-btn" data-tab="advisories">ASESORÍAS</button>
+            <button class="tab-btn" data-tab="reports">REPORTES</button>
         </div>
 
         <div class="dashboard-content">
@@ -76,6 +76,13 @@ import Layout from "../../layouts/Layout.astro";
                                 <label>HORA</label>
                                 <input type="time" name="time" required />
                             </div>
+                            <div class="input-group">
+                                <label>MODALIDAD</label>
+                                <select name="modality" required>
+                                    <option value="VIRTUAL">Virtual</option>
+                                    <option value="PRESENCIAL">Presencial</option>
+                                </select>
+                            </div>
                             <button type="submit" class="cyber-button"
                                 >AGREGAR HORARIO</button
                             >
@@ -90,37 +97,86 @@ import Layout from "../../layouts/Layout.astro";
                 </div>
             </div>
 
-            <!-- Advisories View -->
-            <div id="advisories-view" class="view-section hidden">
+
+            <!-- Reports View -->
+            <div id="reports-view" class="view-section hidden">
                 <div class="view-header">
-                    <h2>TODAS LAS ASESORÍAS</h2>
+                    <h2>REPORTES ADMINISTRATIVOS</h2>
                 </div>
-                <div class="table-container">
-                    <table class="cyber-table">
-                        <thead>
-                            <tr>
-                                <th>FECHA</th>
-                                <th>PROGRAMADOR</th>
-                                <th>USUARIO</th>
-                                <th>ESTADO</th>
-                                <th>NOTAS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="advisories-body">
-                            <!-- Injected -->
-                        </tbody>
-                    </table>
+                
+                <div class="reports-grid">
+                    <!-- Global Advisories Report -->
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3>📊 Reporte Global de Asesorías</h3>
+                            <div class="export-actions">
+                                <button class="export-btn pdf" onclick="window.exportAdvisoriesPDF()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    PDF
+                                </button>
+                                <button class="export-btn excel" onclick="window.exportAdvisoriesExcel()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><path d="M17 16h-4"></path><path d="M17 12h-4"></path><path d="M17 8h-4"></path></svg>
+                                    Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="report-preview table-container">
+                            <table class="cyber-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Programador</th>
+                                        <th>Usuario</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-advisories-body">
+                                    <tr><td colspan="4" class="text-center">Cargando datos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Projects Report -->
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3>🚀 Reporte de Proyectos</h3>
+                            <div class="export-actions">
+                                <button class="export-btn pdf" onclick="window.exportProjectsPDF()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    PDF
+                                </button>
+                                <button class="export-btn excel" onclick="window.exportProjectsExcel()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><path d="M17 16h-4"></path><path d="M17 12h-4"></path><path d="M17 8h-4"></path></svg>
+                                    Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="report-preview table-container">
+                            <table class="cyber-table">
+                                <thead>
+                                    <tr>
+                                        <th>Proyecto</th>
+                                        <th>Dueño</th>
+                                        <th>Tipo</th>
+                                        <th>Tecnologías</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-projects-body">
+                                    <tr><td colspan="4" class="text-center">Cargando datos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</Layout>
 
 <script>
     import {
-        getAllUsers,
         updateUserRole,
         deleteUser,
+        getAllAdvisories,
+        getAllUsers
     } from "../../lib/services/adminService";
     import {
         getAllSchedules,
@@ -360,9 +416,10 @@ import Layout from "../../layouts/Layout.astro";
 
             try {
                 await createSchedule({
-                    programmerId: formData.get("programmerId") as string,
+                    programmerId: Number(formData.get("programmerId")),
                     date: formData.get("date") as string,
                     time: formData.get("time") as string,
+                    modality: formData.get("modality") as "VIRTUAL" | "PRESENCIAL",
                 });
                 loadSchedules();
                 (scheduleForm as HTMLFormElement).reset();
@@ -376,7 +433,7 @@ import Layout from "../../layouts/Layout.astro";
     (window as any).deleteSchedule = async (id: string) => {
         if (!confirm("¿Eliminar este horario?")) return;
         try {
-            await deleteSchedule(id);
+            await deleteSchedule(Number(id));
             loadSchedules();
         } catch (error) {
             console.error(error);
@@ -385,52 +442,7 @@ import Layout from "../../layouts/Layout.astro";
     };
 
     // --- ADVISORIES VIEW ---
-    const advisoriesBody = document.getElementById("advisories-body");
 
-    function loadAdvisories() {
-        const requests = JSON.parse(
-            localStorage.getItem("ciber_requests") || "[]",
-        );
-        const users = JSON.parse(localStorage.getItem("ciber_user_db") || "[]");
-
-        if (advisoriesBody) {
-            if (requests.length === 0) {
-                advisoriesBody.innerHTML = `<tr><td colspan="5" class="text-center">No hay asesorías registradas en el sistema.</td></tr>`;
-                return;
-            }
-
-            advisoriesBody.innerHTML = requests
-                .map((r: any) => {
-                    // Resolve Programmer Name
-                    let progName = "Desconocido";
-                    if (r.programmerId) {
-                        const prog = users.find(
-                            (u: any) => u.id === r.programmerId,
-                        );
-                        if (prog) progName = prog.name;
-                        else if (r.programmerName) progName = r.programmerName;
-                    } else if (r.programmerName) {
-                        progName = r.programmerName;
-                    }
-
-                    return `
-                <tr>
-                    <td>${new Date(r.timestamp).toLocaleDateString()}</td>
-                    <td><span class="prog-badge">${progName}</span></td>
-                    <td>
-                        <div class="user-info-sm">
-                            <span class="u-name">${r.userName}</span>
-                            <span class="u-email">${r.userEmail}</span>
-                        </div>
-                    </td>
-                    <td><span class="status-badge ${r.status}">${getStatusLabel(r.status)}</span></td>
-                    <td class="notes-cell">${r.notes || "<span class='dim'>-</span>"}</td>
-                </tr>
-            `;
-                })
-                .join("");
-        }
-    }
 
     function getStatusLabel(status: string) {
         switch (status) {
@@ -449,7 +461,169 @@ import Layout from "../../layouts/Layout.astro";
     loadUsers();
     loadProgrammerOptions();
     loadSchedules();
-    loadAdvisories();
+
+    // --- REPORTS LOGIC ---
+    const reportAdvisoriesBody = document.getElementById("report-advisories-body");
+    const reportProjectsBody = document.getElementById("report-projects-body");
+    let globalAdvisoriesCache: any[] = [];
+    let globalProjectsCache: any[] = [];
+
+    async function loadReportsData() {
+        try {
+            // Load Advisories
+            globalAdvisoriesCache = await getAllAdvisories();
+            renderAdvisoriesReport(globalAdvisoriesCache);
+
+            // Load Projects
+            const { getAllProjects } = await import("../../lib/services/projectService");
+            globalProjectsCache = await getAllProjects();
+            renderProjectsReport(globalProjectsCache);
+
+        } catch (error) {
+            console.error("Error loading reports:", error);
+        }
+    }
+
+    function renderAdvisoriesReport(data: any[]) {
+        if (!reportAdvisoriesBody) return;
+        if (data.length === 0) {
+            reportAdvisoriesBody.innerHTML = '<tr><td colspan="4" class="text-center">No hay datos.</td></tr>';
+            return;
+        }
+        // Show max 10 latest for preview
+        const preview = data.slice(0, 10);
+        reportAdvisoriesBody.innerHTML = preview.map((item: any) => `
+            <tr>
+                <td>${item.date}</td>
+                <td>${item.programmerName || "-"}</td>
+                <td>${item.userName || "-"}</td>
+                <td><span class="status-badge ${item.status}">${getStatusLabel(item.status)}</span></td>
+            </tr>
+        `).join("") + (data.length > 10 ? `<tr><td colspan="4" class="text-center text-dim">...y ${data.length - 10} más (Ver Export)</td></tr>` : "");
+    }
+
+    function renderProjectsReport(data: any[]) {
+        if (!reportProjectsBody) return;
+        if (data.length === 0) {
+            reportProjectsBody.innerHTML = '<tr><td colspan="4" class="text-center">No hay datos.</td></tr>';
+            return;
+        }
+        // Show max 10 latest for preview
+        const preview = data.slice(0, 10);
+        reportProjectsBody.innerHTML = preview.map((item: any) => `
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.ownerName || "Usuario"}</td>
+                <td>${item.type}</td>
+                <td><small>${item.techs ? item.techs.join(", ") : "-"}</small></td>
+            </tr>
+        `).join("") + (data.length > 10 ? `<tr><td colspan="4" class="text-center text-dim">...y ${data.length - 10} más (Ver Export)</td></tr>` : "");
+    }
+
+    // EXPORT FUNCTIONS
+    (window as any).exportAdvisoriesPDF = async () => {
+        const { jsPDF } = await import("jspdf");
+        const autoTableModule = await import("jspdf-autotable");
+        const autoTable = autoTableModule.default;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text("Reporte Global de Asesorías", 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 30);
+
+        const tableData = globalAdvisoriesCache.map((a: any) => [
+            a.date,
+            a.time,
+            a.programmerName || "-",
+            a.userName || "-",
+            a.modality,
+            a.status
+        ]);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [['Fecha', 'Hora', 'Programador', 'Usuario', 'Modalidad', 'Estado']],
+            body: tableData,
+        });
+
+        doc.save("reporte_asesorias_global.pdf");
+    };
+
+    (window as any).exportAdvisoriesExcel = async () => {
+        const XLSX = await import("xlsx");
+        const data = globalAdvisoriesCache.map((a: any) => ({
+            "Fecha": a.date,
+            "Hora": a.time,
+            "Programador": a.programmerName,
+            "Usuario": a.userName,
+            "Email Usuario": a.userEmail || "-", // Ensure DTO has this or check
+            "Asunto": a.message, // Initial message
+            "Modalidad": a.modality,
+            "Estado": a.status,
+            "Respuesta": a.responseMessage || "-"
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Asesorías Globales");
+        XLSX.writeFile(wb, "reporte_asesorias_global.xlsx");
+    };
+
+    (window as any).exportProjectsPDF = async () => {
+        const { jsPDF } = await import("jspdf");
+        const autoTableModule = await import("jspdf-autotable");
+        const autoTable = autoTableModule.default;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text("Reporte Global de Proyectos", 14, 20);
+        
+        const tableData = globalProjectsCache.map((p: any) => [
+            p.name,
+            p.type,
+            p.ownerName || "-",
+            p.techs ? p.techs.join(", ") : "-",
+            p.deployUrl || "-"
+        ]);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [['Proyecto', 'Tipo', 'Dueño', 'Tecnologías', 'URL']],
+            body: tableData,
+        });
+
+        doc.save("reporte_proyectos_global.pdf");
+    };
+
+    (window as any).exportProjectsExcel = async () => {
+        const XLSX = await import("xlsx");
+        const data = globalProjectsCache.map((p: any) => ({
+            "ID": p.id,
+            "Nombre": p.name,
+            "Descripción": p.description,
+            "Tipo": p.type,
+            "Dueño": p.ownerName || "-",
+            "Tecnologías": p.techs ? p.techs.join(", ") : "-",
+            "Repositorio": p.repoUrl || "-",
+            "Deploy": p.deployUrl || "-"
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Proyectos Globales");
+        XLSX.writeFile(wb, "reporte_proyectos_global.xlsx");
+    };
+
+    // Load reports when tab is clicked
+    tabs.forEach((t) => {
+        if ((t as HTMLElement).dataset.tab === "reports") {
+            t.addEventListener("click", () => {
+                if (globalAdvisoriesCache.length === 0) loadReportsData();
+            });
+        }
+    });
+
 </script>
 
 <style>
@@ -791,6 +965,82 @@ import Layout from "../../layouts/Layout.astro";
             opacity: 0;
             transform: translateY(10px);
         }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* REPORTS STYLES */
+    .reports-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .report-card {
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding-bottom: 1rem;
+    }
+
+    .report-header h3 {
+        color: var(--text-main);
+        font-size: 1.3rem;
+        margin: 0;
+    }
+
+    .export-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .export-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+    }
+
+    .export-btn.pdf {
+        background: rgba(255, 68, 68, 0.1);
+        color: #ff4444;
+        border: 1px solid #ff4444;
+    }
+
+    .export-btn.pdf:hover {
+        background: #ff4444;
+        color: white;
+    }
+
+    .export-btn.excel {
+        background: rgba(57, 255, 20, 0.1);
+        color: #39ff14;
+        border: 1px solid #39ff14;
+    }
+
+    .export-btn.excel:hover {
+        background: #39ff14;
+        color: black;
+    }
+
+    .text-center { text-align: center; }
+    .text-dim { color: var(--text-dim); }
         to {
             opacity: 1;
             transform: translateY(0);

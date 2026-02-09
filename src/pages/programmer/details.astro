@@ -21,7 +21,12 @@ import Layout from "../../layouts/Layout.astro";
                 <div id="p-skills" class="skills-list"></div>
 
                 <!-- Social Links -->
+                <!-- Social Links -->
                 <div id="p-social" class="social-links"></div>
+
+                <!-- Advisory Button (Dynamic) -->
+                <div id="advisory-btn-container" style="margin-top: 2rem;">
+                </div>
             </div>
         </div>
 
@@ -59,10 +64,53 @@ import Layout from "../../layouts/Layout.astro";
         <p>OPERADOR NO ENCONTRADO EN LA RED</p>
         <a href="/" class="back-link">VOLVER AL NEXUS</a>
     </div>
+
+    <!-- Advisory Modal -->
+    <div id="advisory-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>SOLICITAR ASESORÍA</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="advisory-form">
+                <div class="input-group">
+                    <label>Selecciona un Horario Disponible</label>
+                    <select id="schedule-select" required class="cyber-select">
+                        <option value="">Cargando horarios...</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Asunto / Mensaje</label>
+                    <textarea
+                        id="advisory-message"
+                        rows="4"
+                        required
+                        placeholder="Describe brevemente el motivo de la asesoría..."
+                    ></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button
+                        type="button"
+                        class="cyber-button outline close-modal-btn"
+                        >CANCELAR</button
+                    >
+                    <button type="submit" class="cyber-button"
+                        >CONFIRMAR SOLICITUD</button
+                    >
+                </div>
+            </form>
+        </div>
+    </div>
 </Layout>
 
 <script>
     import { getProfileByUserId } from "../../lib/services/profileService";
+    import { getSchedulesByProgrammer } from "../../lib/services/scheduleService";
+    import { createAdvisory } from "../../lib/services/advisoryService";
+
+    let currentProgrammerId: number | null = null;
 
     async function init() {
         const loading = document.getElementById("loading");
@@ -90,6 +138,8 @@ import Layout from "../../layouts/Layout.astro";
             // Fetch profile data
             const profile = await getProfileByUserId(parseInt(id));
             if (!profile) throw new Error("Profile not found");
+
+            currentProgrammerId = profile.userId;
 
             // Update Basic Info
             if (pName) {
@@ -137,6 +187,32 @@ import Layout from "../../layouts/Layout.astro";
                 pSocial.innerHTML = socialHtml;
             }
 
+            // Advisory Button Logic
+            const advisoryBtnContainer = document.getElementById(
+                "advisory-btn-container",
+            );
+            if (advisoryBtnContainer) {
+                // Check if viewer is not the programmer himself
+                const currentUser = JSON.parse(
+                    localStorage.getItem("ciber_user") || "{}",
+                );
+                if (
+                    currentUser &&
+                    currentUser.id &&
+                    parseInt(currentUser.id) !== profile.userId
+                ) {
+                    advisoryBtnContainer.innerHTML = `
+                        <button id="open-advisory-modal" class="cyber-button">
+                            AGENDAR ASESORÍA
+                        </button>
+                    `;
+
+                    document
+                        .getElementById("open-advisory-modal")
+                        ?.addEventListener("click", openAdvisoryModal);
+                }
+            }
+
             // Projects
             const API_URL =
                 import.meta.env.PUBLIC_API_URL ||
@@ -164,6 +240,9 @@ import Layout from "../../layouts/Layout.astro";
 
             // Initialize Filter Logic
             initFilters();
+
+            // Initialize Modal Logic
+            initAdvisoryModal();
         } catch (e) {
             console.error("Error loading profile:", e);
             if (loading) loading.style.display = "none";
@@ -227,6 +306,108 @@ import Layout from "../../layouts/Layout.astro";
                 });
             });
         });
+    }
+
+    function initAdvisoryModal() {
+        const modal = document.getElementById("advisory-modal");
+        const form = document.getElementById("advisory-form");
+        const closeBtns = document.querySelectorAll(
+            ".close-modal, .close-modal-btn",
+        );
+        const scheduleSelect = document.getElementById(
+            "schedule-select",
+        ) as HTMLSelectElement;
+
+        closeBtns.forEach((btn) =>
+            btn.addEventListener("click", () => {
+                modal?.classList.add("hidden");
+            }),
+        );
+
+        form?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const message = (
+                document.getElementById(
+                    "advisory-message",
+                ) as HTMLTextAreaElement
+            ).value;
+            const scheduleJson = scheduleSelect.value;
+
+            if (!scheduleJson || !currentProgrammerId) return;
+
+            try {
+                const schedule = JSON.parse(scheduleJson);
+                const user = JSON.parse(
+                    localStorage.getItem("ciber_user") || "{}",
+                );
+
+                if (!user.id) {
+                    alert("Debes iniciar sesión para agendar.");
+                    window.location.href = "/login";
+                    return;
+                }
+
+                const payload = {
+                    programmerId: currentProgrammerId,
+                    userId: parseInt(user.id),
+                    message: message,
+                    date: schedule.date,
+                    time: schedule.time,
+                    modality: schedule.modality,
+                    scheduleId: schedule.id,
+                };
+
+                console.log("Sending Advisory Payload:", payload);
+                await createAdvisory(payload);
+
+                alert(
+                    "✅ Solicitud enviada exitosamente. Espera la confirmación del programador.",
+                );
+                modal?.classList.add("hidden");
+                (form as HTMLFormElement).reset();
+            } catch (error: any) {
+                console.error(error);
+                alert("Error al enviar solicitud: " + error.message);
+            }
+        });
+    }
+
+    async function openAdvisoryModal() {
+        const modal = document.getElementById("advisory-modal");
+        const scheduleSelect = document.getElementById(
+            "schedule-select",
+        ) as HTMLSelectElement;
+
+        if (modal) modal.classList.remove("hidden");
+
+        if (scheduleSelect && currentProgrammerId) {
+            scheduleSelect.innerHTML =
+                '<option value="">Cargando horarios...</option>';
+            try {
+                const schedules =
+                    await getSchedulesByProgrammer(currentProgrammerId);
+                const availableSchedules = schedules; // Show all, but mark occupied ones
+
+                if (availableSchedules.length === 0) {
+                    scheduleSelect.innerHTML =
+                        '<option value="">No hay horarios configurados</option>';
+                    return;
+                }
+
+                scheduleSelect.innerHTML = availableSchedules
+                    .map((s: any) => {
+                        const isBooked = s.status !== "AVAILABLE";
+                        // Combine Date, Time, Modality
+                        const label = `${s.date} - ${s.time.slice(0, 5)} - ${s.modality} ${isBooked ? "(OCUPADO)" : ""}`;
+                        const value = JSON.stringify(s); // Store whole object to extract date/time/modality
+                        return `<option value='${value}' ${isBooked ? "disabled" : ""} style="${isBooked ? "color: #ff3939;" : ""}">${label}</option>`;
+                    })
+                    .join("");
+            } catch (error) {
+                scheduleSelect.innerHTML =
+                    '<option value="">Error al cargar horarios</option>';
+            }
+        }
     }
 
     // Run on init
@@ -538,5 +719,96 @@ import Layout from "../../layouts/Layout.astro";
     :global(.action-btn.icon) {
         border: 1px solid #bc13fe;
         color: #bc13fe;
+    }
+    :global(.action-btn.icon) {
+        border: 1px solid #bc13fe;
+        color: #bc13fe;
+    }
+
+    /* Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    }
+
+    .modal.hidden {
+        display: none;
+    }
+
+    .modal-content {
+        background: rgba(10, 15, 12, 0.95);
+        border: 1px solid var(--neon-green);
+        padding: 2rem;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 0 30px rgba(57, 255, 20, 0.2);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 1rem;
+    }
+
+    .modal-header h2 {
+        color: var(--neon-green);
+        font-family: "Orbitron", sans-serif;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .close-modal {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+    }
+
+    .cyber-select {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 0.8rem;
+        border-radius: 4px;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1rem;
+    }
+
+    .cyber-select option {
+        background: #000;
+        color: white;
+    }
+
+    .input-group textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 0.8rem;
+        border-radius: 4px;
+        font-family: "Rajdhani", sans-serif;
+        resize: vertical;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        justify-content: flex-end;
     }
 </style>

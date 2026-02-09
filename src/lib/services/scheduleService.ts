@@ -34,6 +34,14 @@ export async function createSchedule(data: CreateScheduleRequest): Promise<Sched
     return response.json();
 }
 
+export async function getSchedulesByProgrammer(programmerId: number): Promise<Schedule[]> {
+    const response = await fetch(`${API_BASE_URL}/api/schedules/programmer/${programmerId}`, {
+        headers: getAuthHeader(),
+    });
+    if (!response.ok) return [];
+    return response.json();
+}
+
 export async function deleteSchedule(id: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/schedules/${id}`, {
         method: "DELETE",

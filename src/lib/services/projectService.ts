@@ -145,3 +145,15 @@ export async function getProjectsByUserId(userId: number): Promise<Project[]> {
 
     return response.json();
 }
+
+/**
+ * Get ALL projects (public)
+ */
+export async function getAllProjects(): Promise<Project[]> {
+    const response = await fetch(`${API_BASE_URL}/api/projects`);
+
+    if (!response.ok) {
+        throw new Error("Error al obtener todos los proyectos");
+    }
+    return response.json();
+}

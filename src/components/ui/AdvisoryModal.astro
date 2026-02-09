@@ -1,9 +1,5 @@
 ---
-const programmers = [
-    "Alex 'Panther' Code",
-    "Sarah 'Viper' Script",
-    "David 'Bear' Data",
-];
+
 ---
 
 <div id="advisory-modal" class="modal-overlay hidden">
@@ -19,13 +15,25 @@ const programmers = [
                 <div class="select-wrapper">
                     <select id="programmer-select" name="programmer" required>
                         <option value="" disabled selected
-                            >Seleccionar Operador</option
+                            >Cargando operadores...</option
                         >
-                        {
-                            programmers.map((prog) => (
-                                <option value={prog}>{prog}</option>
-                            ))
-                        }
+                    </select>
+                    <div class="select-arrow"></div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="schedule-select">HORARIO DISPONIBLE</label>
+                <div class="select-wrapper">
+                    <select
+                        id="schedule-select"
+                        name="schedule"
+                        required
+                        disabled
+                    >
+                        <option value="" disabled selected
+                            >Primero selecciona un operador</option
+                        >
                     </select>
                     <div class="select-arrow"></div>
                 </div>
@@ -44,37 +52,23 @@ const programmers = [
                 </div>
             </div>
 
-            <div class="row">
-                <div class="input-group">
-                    <label for="date">FECHA</label>
-                    <input type="date" id="date" name="date" required />
-                    <div class="input-line"></div>
-                </div>
-                <div class="input-group">
-                    <label for="time">HORA DISPONIBLE</label>
-                    <input type="time" id="time" name="time" required />
-                    <div class="input-line"></div>
-                </div>
-            </div>
-
             <div class="input-group">
-                <label for="notes">NOTA DE MISIÓN</label>
+                <label for="subject">ASUNTO</label>
                 <textarea
-                    id="notes"
-                    name="notes"
+                    id="subject"
+                    name="subject"
                     rows="3"
                     placeholder="Describe el objetivo de la asesoría..."
-                ></textarea>
+                    required></textarea>
                 <div class="input-line"></div>
             </div>
 
-            <button type="submit" class="cyber-button">
+            <button type="submit" id="submit-advisory-btn" class="cyber-button">
                 CONFIRMAR ENLACE
                 <span class="btn-glitch"></span>
             </button>
         </form>
 
-        <!-- Success Message (Initially Hidden) LOCAL AVISOS -->
         <div id="success-message" class="success-message hidden">
             <div class="success-icon">
                 <svg
@@ -93,8 +87,8 @@ const programmers = [
             </div>
             <h3>¡ENLACE ESTABLECIDO!</h3>
             <p>
-                Nuestros operadores han recibido tu señal.<br />Confirmaremos la
-                conexión en breve.
+                Tu solicitud ha sido enviada al programador.<br />Recibirás una
+                respuesta en tus solicitudes.
             </p>
             <button id="close-success" class="cyber-button small"
                 >ENTENDIDO</button
@@ -221,13 +215,18 @@ const programmers = [
         padding-left: 0;
     }
 
+    select:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
     .select-wrapper {
         position: relative;
     }
 
     option {
-        background: var(--deep-jungle);
-        color: var(--text-main);
+        background: #000;
+        color: white;
     }
 
     .cyber-button {
@@ -248,6 +247,13 @@ const programmers = [
     .cyber-button:hover {
         box-shadow: 0 0 20px var(--neon-green);
         transform: translateY(-2px);
+    }
+
+    .cyber-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
     .cyber-button.small {
@@ -340,6 +346,104 @@ const programmers = [
     const emailInput = document.getElementById(
         "user-email",
     ) as HTMLInputElement;
+    const programmerSelect = document.getElementById(
+        "programmer-select",
+    ) as HTMLSelectElement;
+    const scheduleSelect = document.getElementById(
+        "schedule-select",
+    ) as HTMLSelectElement;
+    const submitBtn = document.getElementById(
+        "submit-advisory-btn",
+    ) as HTMLButtonElement;
+
+    // Store loaded schedules data
+    let loadedSchedules: any[] = [];
+
+    // Load programmers from API when modal opens
+    async function loadProgrammers() {
+        try {
+            const { getAllProfiles } =
+                await import("../../lib/services/profileService");
+            const profiles = await getAllProfiles();
+
+            programmerSelect.innerHTML =
+                '<option value="" disabled selected>Seleccionar Operador</option>';
+            profiles.forEach((profile: any) => {
+                const option = document.createElement("option");
+                option.value = profile.userId.toString();
+                option.textContent =
+                    profile.userName || `Programador #${profile.userId}`;
+                programmerSelect.appendChild(option);
+            });
+
+            if (profiles.length === 0) {
+                programmerSelect.innerHTML =
+                    '<option value="" disabled selected>No hay operadores disponibles</option>';
+            }
+        } catch (error) {
+            console.error("Error loading programmers:", error);
+            programmerSelect.innerHTML =
+                '<option value="" disabled selected>Error al cargar operadores</option>';
+        }
+    }
+
+    // Load schedules when a programmer is selected
+    async function loadSchedulesForProgrammer(programmerId: number) {
+        scheduleSelect.disabled = true;
+        scheduleSelect.innerHTML =
+            '<option value="" disabled selected>Cargando horarios...</option>';
+
+        try {
+            const { getSchedulesByProgrammer } =
+                await import("../../lib/services/scheduleService");
+            const schedules = await getSchedulesByProgrammer(programmerId);
+            loadedSchedules = schedules;
+
+            scheduleSelect.innerHTML =
+                '<option value="" disabled selected>Seleccionar horario</option>';
+
+            if (schedules.length === 0) {
+                scheduleSelect.innerHTML =
+                    '<option value="" disabled selected>No hay horarios disponibles</option>';
+                return;
+            }
+
+            schedules.forEach((s: any, index: number) => {
+                const option = document.createElement("option");
+                option.value = index.toString();
+                const dateFormatted = s.date;
+                const timeFormatted = s.time;
+                const modalityLabel =
+                    s.modality === "VIRTUAL" ? "Virtual" : "Presencial";
+                const isBooked = s.status !== "AVAILABLE"; // Check status
+
+                option.textContent = `${dateFormatted} - ${timeFormatted} (${modalityLabel}) ${isBooked ? "(OCUPADO)" : ""}`;
+
+                if (isBooked) {
+                    option.disabled = true;
+                    option.style.color = "#ff4444"; // Visual cue
+                }
+
+                scheduleSelect.appendChild(option);
+            });
+
+            scheduleSelect.disabled = false;
+        } catch (error) {
+            console.error("Error loading schedules:", error);
+            scheduleSelect.innerHTML =
+                '<option value="" disabled selected>Error al cargar horarios</option>';
+        }
+    }
+
+    // Programmer select change handler
+    if (programmerSelect) {
+        programmerSelect.addEventListener("change", () => {
+            const programmerId = parseInt(programmerSelect.value);
+            if (programmerId) {
+                loadSchedulesForProgrammer(programmerId);
+            }
+        });
+    }
 
     // Function to open modal (can be called globally)
     (window as any).openAdvisoryModal = () => {
@@ -356,6 +460,15 @@ const programmers = [
                 if (nameInput) nameInput.value = user.name || "";
                 if (emailInput) emailInput.value = user.email || "";
             }
+
+            // Reset schedule select
+            scheduleSelect.disabled = true;
+            scheduleSelect.innerHTML =
+                '<option value="" disabled selected>Primero selecciona un operador</option>';
+            loadedSchedules = [];
+
+            // Load programmers
+            loadProgrammers();
         }
     };
 
@@ -368,38 +481,79 @@ const programmers = [
         closeSuccessBtn.addEventListener("click", closeModalInfo);
 
     if (form) {
-        form.addEventListener("submit", (e) => {
+        form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            // Get form data
-            const formData = new FormData(form as HTMLFormElement);
-            const requestData = {
-                id: Date.now().toString(),
-                programmer: formData.get("programmer"),
-                userName: formData.get("name"),
-                userEmail: formData.get("email"),
-                date: formData.get("date"),
-                time: formData.get("time"),
-                notes: formData.get("notes"),
-                status: "pending",
-                timestamp: new Date().toISOString(),
-            };
+            const userStr = localStorage.getItem("ciber_user");
+            if (!userStr) {
+                alert("Debes iniciar sesion para agendar una asesoria.");
+                return;
+            }
+            const user = JSON.parse(userStr);
 
-            // Save to localStorage
-            const existingRequests = JSON.parse(
-                localStorage.getItem("ciber_requests") || "[]",
-            );
-            existingRequests.push(requestData);
-            localStorage.setItem(
-                "ciber_requests",
-                JSON.stringify(existingRequests),
-            );
+            const programmerId = parseInt(programmerSelect.value);
+            const scheduleIndex = parseInt(scheduleSelect.value);
+            const selectedSchedule = loadedSchedules[scheduleIndex];
 
-            // Simulate API call
-            setTimeout(() => {
+            if (!selectedSchedule) {
+                alert("Selecciona un horario valido.");
+                return;
+            }
+
+            const subjectEl = document.getElementById(
+                "subject",
+            ) as HTMLTextAreaElement;
+            const message = subjectEl?.value || "";
+
+            // Disable button during request
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "ENVIANDO...";
+            }
+
+            if (!programmerId) {
+                alert(
+                    "Error: No se ha detectado el ID del programador seleccionado.",
+                );
+                return;
+            }
+
+            try {
+                const { createAdvisory } =
+                    await import("../../lib/services/advisoryService");
+
+                console.log("Creating advisory with payload:", {
+                    programmerId,
+                    userId: parseInt(user.id),
+                    message: message,
+                    date: selectedSchedule.date,
+                    time: selectedSchedule.time,
+                    modality: selectedSchedule.modality,
+                    scheduleId: selectedSchedule.id,
+                });
+
+                await createAdvisory({
+                    programmerId: programmerId,
+                    userId: parseInt(user.id),
+                    message: message,
+                    date: selectedSchedule.date,
+                    time: selectedSchedule.time,
+                    modality: selectedSchedule.modality,
+                    scheduleId: selectedSchedule.id, // Ensure this is passed!
+                });
+
+                // Show success
                 form.classList.add("hidden");
                 if (successMessage) successMessage.classList.remove("hidden");
-            }, 500);
+            } catch (error: any) {
+                console.error("Error creating advisory:", error);
+                alert("Error al crear la asesoria: " + error.message);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "CONFIRMAR ENLACE";
+                }
+            }
         });
     }
 
