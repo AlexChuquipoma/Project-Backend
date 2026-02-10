@@ -1,7 +1,7 @@
 // API Configuration
 // When Spring Boot backend is ready, update the API_BASE_URL
 
-export const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
+export const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'https://backend-spring-wgjc.onrender.com/api';
 
 export const API_ENDPOINTS = {
     auth: {

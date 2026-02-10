@@ -1,10 +1,6 @@
 import type { User } from "../../types/user.types";
 
-const API_BASE_URL =
-    import.meta.env.PUBLIC_API_URL ||
-    (import.meta.env.DEV
-        ? "http://localhost:8080"
-        : "https://backend-spring-wgjc.onrender.com");
+const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'https://backend-spring-wgjc.onrender.com';
 
 function getAuthHeader(): HeadersInit {
     const userStr = localStorage.getItem("ciber_user");

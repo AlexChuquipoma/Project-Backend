@@ -74,7 +74,6 @@ export async function register(data: RegisterData): Promise<User> {
                 name: data.name,
                 email: data.email,
                 password: data.password,
-                role: (data.role || 'user').toUpperCase(), // Backend expects UPPERCASE
             }),
         });
 

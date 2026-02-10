@@ -3,9 +3,25 @@ import "../styles/global.css";
 
 interface Props {
     title: string;
+    description?: string;
+    keywords?: string;
+    ogImage?: string;
+    canonicalUrl?: string;
+    noindex?: boolean;
 }
 
-const { title } = Astro.props;
+const {
+    title,
+    description = "CiberPortfolio - Plataforma de portafolios para programadores. Conecta con desarrolladores expertos, agenda asesorías y descubre proyectos tecnológicos.",
+    keywords = "portafolio programadores, desarrolladores, asesorías tecnológicas, proyectos software, programación, desarrollo web",
+    ogImage = "/og-image.png",
+    canonicalUrl,
+    noindex = false,
+} = Astro.props;
+
+const siteUrl = "https://backend-portfolio-f9095.web.app";
+const fullCanonical = canonicalUrl ? `${siteUrl}${canonicalUrl}` : `${siteUrl}${Astro.url.pathname}`;
+
 import Navbar from "../components/shared/Navbar.astro";
 import AdvisoryModal from "../components/ui/AdvisoryModal.astro";
 import AuthModal from "../components/ui/AuthModal.astro";
@@ -15,14 +31,34 @@ import AuthModal from "../components/ui/AuthModal.astro";
 <html lang="es">
     <head>
         <meta charset="UTF-8" />
-        <meta
-            name="description"
-            content="Portafolio de Programadores - Edición Ciber-Selva"
-        />
-        <meta name="viewport" content="width=device-width" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="generator" content={Astro.generator} />
+
+        <!-- SEO -->
         <title>{title}</title>
+        <meta name="description" content={description} />
+        <meta name="keywords" content={keywords} />
+        <link rel="canonical" href={fullCanonical} />
+        {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={fullCanonical} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={`${siteUrl}${ogImage}`} />
+        <meta property="og:locale" content="es_ES" />
+        <meta property="og:site_name" content="CiberPortfolio" />
+
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={`${siteUrl}${ogImage}`} />
+
+        <!-- Tema -->
+        <meta name="theme-color" content="#39ff14" />
     </head>
     <body>
         <Navbar />

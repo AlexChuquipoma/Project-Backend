@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /programmer/dashboard
+Disallow: /programmer/profile
+Disallow: /programmer/account
+Disallow: /programmer/requests
+Disallow: /auth/
+
+Sitemap: https://backend-portfolio-f9095.web.app/sitemap.xml

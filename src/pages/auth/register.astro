@@ -2,7 +2,12 @@
 import Layout from "../../layouts/Layout.astro";
 ---
 
-<Layout title="Registro | CiberPortfolio">
+<Layout
+    title="Registro | CiberPortfolio"
+    description="Crea tu cuenta en CiberPortfolio. Únete a la comunidad de programadores y muestra tus proyectos al mundo."
+    canonicalUrl="/auth/register"
+    noindex={true}
+>
     <div class="auth-container">
         <div class="auth-card">
             <h1 class="glitch" data-text="REGISTRO">REGISTRO</h1>
@@ -57,36 +62,6 @@ import Layout from "../../layouts/Layout.astro";
                     <div class="input-line"></div>
                 </div>
 
-                <div class="input-group role-selector">
-                    <p>TIPO DE CUENTA</p>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input
-                                type="radio"
-                                name="role"
-                                value="user"
-                                checked
-                            />
-                            <span class="custom-radio"></span>
-                            RECLUTADOR
-                        </label>
-                        <label class="radio-label">
-                            <input
-                                type="radio"
-                                name="role"
-                                value="programmer"
-                            />
-                            <span class="custom-radio"></span>
-                            OPERADOR
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="role" value="admin" />
-                            <span class="custom-radio"></span>
-                            ADMINISTRADOR
-                        </label>
-                    </div>
-                </div>
-
                 <button type="submit" class="cyber-button">
                     INICIAR REGISTRO
                     <span class="btn-glitch"></span>
@@ -121,10 +96,6 @@ import Layout from "../../layouts/Layout.astro";
                         const confirm = formData.get(
                             "confirm-password",
                         ) as string;
-                        const role = formData.get("role") as
-                            | "user"
-                            | "programmer"
-                            | "admin";
 
                         // Clear previous errors
                         errorContainer.textContent = "";
@@ -157,20 +128,11 @@ import Layout from "../../layouts/Layout.astro";
                             name: name.trim(),
                             email: email.trim(),
                             password,
-                            role: role || "user",
                         };
 
                         try {
-                            const user = await register(registerData);
-
-                            // Redirect based on role
-                            if (user.role === "admin") {
-                                window.location.href = "/admin/dashboard";
-                            } else if (user.role === "programmer") {
-                                window.location.href = "/programmer/dashboard";
-                            } else {
-                                window.location.href = "/";
-                            }
+                            await register(registerData);
+                            window.location.href = "/";
                         } catch (error) {
                             showError(
                                 error instanceof Error
@@ -302,61 +264,6 @@ import Layout from "../../layouts/Layout.astro";
     input:focus ~ .input-line {
         background: var(--cyber-purple);
         box-shadow: 0 0 10px var(--cyber-purple);
-    }
-
-    .role-selector {
-        margin-bottom: 2rem;
-        color: var(--text-dim);
-    }
-
-    .role-selector p {
-        font-size: 0.8rem;
-        margin-bottom: 1rem;
-        letter-spacing: 1px;
-    }
-
-    .radio-group {
-        display: flex;
-        gap: 2rem;
-    }
-
-    .radio-label {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        font-size: 0.9rem;
-        color: var(--text-main);
-    }
-
-    .radio-label input {
-        display: none;
-    }
-
-    .custom-radio {
-        width: 16px;
-        height: 16px;
-        border: 2px solid var(--text-dim);
-        border-radius: 50%;
-        margin-right: 0.5rem;
-        display: inline-block;
-        position: relative;
-    }
-
-    .radio-label input:checked + .custom-radio {
-        border-color: var(--cyber-purple);
-        box-shadow: 0 0 10px var(--cyber-purple);
-    }
-
-    .radio-label input:checked + .custom-radio::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 8px;
-        height: 8px;
-        background: var(--cyber-purple);
-        border-radius: 50%;
     }
 
     .cyber-button {
